@@ -124,6 +124,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Custom ignore
-/data
-/output
+# Custom ignore
+data/
+output/
