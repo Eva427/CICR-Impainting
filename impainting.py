@@ -1,3 +1,7 @@
 from impaintingLib import *
 
-o = AutoEncoder()
+trainloader, testloader = getCeleba()
+
+images, labels = next(iter(trainloader))
+images = squareMask(images)
+plot_img(images[:8])
