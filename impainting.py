@@ -1,3 +1,3 @@
 from impaintingLib import *
 
-o = Obj()
+o = AutoEncoder()
