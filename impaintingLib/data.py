@@ -1,5 +1,6 @@
-class Obj:
+# getCeleba
+# getFaces
+# getFacesPlusCeleba
 
-    def __init__(self):
-        print("obj")
-
+# méthodes de dataAugmentation ...
+# contraste / rotation / couleur / zoom
