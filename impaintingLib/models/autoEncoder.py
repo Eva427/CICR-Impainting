@@ -1,6 +1,5 @@
 import torch.nn as nn
 
-# simple auto encoder
 class AutoEncoder(nn.Module):
     
     def __init__(self):
@@ -29,7 +28,3 @@ class AutoEncoder(nn.Module):
         z = self.encoder(x)
         y = self.decoder(z)
         return y
-# uNet
-
-# partial convolution
-# pixel shuffle 
