@@ -4,7 +4,7 @@ from tqdm.notebook import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train(model, optimizer, loader, criterion, epochs=5, alterFunc=None, visu=None, **kwargs):
+def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None):
 
     for epoch in range(epochs):
         running_loss = []
@@ -13,8 +13,8 @@ def train(model, optimizer, loader, criterion, epochs=5, alterFunc=None, visu=No
         for x, _ in t:
             x = x.to(device)
 
-            if alterFunc :
-                x_prime = alterFunc(x)
+            if alter :
+                x_prime = alter(x)
             else : 
                 x_prime = x
 
@@ -33,13 +33,13 @@ def train(model, optimizer, loader, criterion, epochs=5, alterFunc=None, visu=No
 def pre_train(model, path):
     return model.load_state_dict(torch.load(path))
 
-def test(model, testloader, alterFunc=None, visu=None, **kwargs):
+def test(model, testloader, alter=None, visu=None):
     
     with torch.no_grad():
         x, _ = next(iter(testloader))
 
-        if alterFunc :
-            x_prime = alterFunc(x)
+        if alter :
+            x_prime = alter(x)
         else : 
             x_prime = x
 
