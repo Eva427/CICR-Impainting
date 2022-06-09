@@ -28,7 +28,7 @@ def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None):
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}')
 
         if visu:
-            visu(x, x_prime, x_hat)
+            visu(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch)
 
 def pre_train(model, path):
     return model.load_state_dict(torch.load(path))
@@ -46,4 +46,4 @@ def test(model, testloader, alter=None, visu=None):
         x_hat = model(x_prime.cuda())
     
     if visu:
-        visu(x, x_prime, x_hat)
+        visu(x=x, x_prime=x_prime, x_hat=x_hat)
