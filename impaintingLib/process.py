@@ -1,6 +1,6 @@
 import torch
 from statistics import mean
-import tqdm
+from tqdm.notebook import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
