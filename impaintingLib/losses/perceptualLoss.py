@@ -49,4 +49,5 @@ def perceptual_loss(x, y):
     #style loss:
     for feats, target_feats in zip(x_feats, y_feats):
         loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
+        
     return loss
