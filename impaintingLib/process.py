@@ -18,7 +18,7 @@ def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None):
             else : 
                 x_prime = x
 
-            x_hat = model(x_prime)
+            x_hat = model(x_prime.cuda())
             loss = criterion(x_hat, x)
 
             running_loss.append(loss.item())
