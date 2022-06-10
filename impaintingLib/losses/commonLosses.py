@@ -1,7 +1,7 @@
 import torch 
 
 # Total Variation loss
-def totalVariationLoss(x):
-    loss = torch.mean(torch.abs(x[:, :, :, :-1] - x[:, :, :, 1:])) + \
-            torch.mean(torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :]))
+def totalVariationLoss(x_hat,x=0):
+    loss = torch.mean(torch.abs(x_hat[:, :, :, :-1] - x_hat[:, :, :, 1:])) + \
+            torch.mean(torch.abs(x_hat[:, :, :-1, :] - x_hat[:, :, 1:, :]))
     return torch.mean(loss)

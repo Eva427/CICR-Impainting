@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class SubPixelNetwork(nn.Module):
-    def __init__(self, upscale_factor):
+    def __init__(self, upscale_factor=1):
         super(SubPixelNetwork, self).__init__()
 
         self.relu = nn.ReLU()

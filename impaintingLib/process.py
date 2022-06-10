@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None, runName=""):
+def train(model, optimizer, loader, criterions, epochs=5, alter=None, visu=None, runName=""):
 
     for epoch in range(epochs):
         running_loss = []
@@ -20,9 +20,12 @@ def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None, 
                 x_prime = x
 
             x_hat = model(x_prime.cuda())
-            loss = criterion(x_hat, x)
+            loss  = 0
+            
+            for criterion in criterions :
+                loss += criterion(x_hat, x)
 
-            running_loss.append(loss.item())
+            running_loss.append(loss.item()/len(criterions))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

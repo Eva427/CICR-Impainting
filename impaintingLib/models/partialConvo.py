@@ -2,6 +2,14 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+###############################################################################
+# BSD 3-Clause License
+#
+# Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
+#
+# Author & Contact: Guilin Liu (guilinl@nvidia.com)
+###############################################################################
+
 class PartialConv2d(nn.Conv2d):
     def __init__(self, *args, **kwargs):
 
@@ -74,3 +82,4 @@ class PartialConv2d(nn.Conv2d):
             return output, self.update_mask
         else:
             return output
+        

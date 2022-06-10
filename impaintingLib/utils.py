@@ -12,7 +12,7 @@ class Visu :
         
         self.count    = 0
         self.gridSize = 16
-        self.figSize  = (20,15)
+        self.figSize  = (40,30)
 
     def plot_img(self,images):
         self.count += 1
@@ -37,12 +37,15 @@ class Visu :
         self.plot_img(kwargs["x_hat"])
         
     def board_plot_last(self,**kwargs):
-        writer = SummaryWriter("runs/" + self.runName)
-        label = "x_hat"
-        images  = kwargs[label]
-        images = torch.clip(images[:self.gridSize],0,1)
+        images_prime = kwargs["x_prime"].cuda()
+        images_hat   = kwargs["x_hat"].cuda()
+        
+        images = torch.cat((images_prime[:self.gridSize],images_hat[:self.gridSize]))
+        images = torch.clip(images,0,1)
         img_grid = make_grid(images)
-        writer.add_image(label,img_grid)
+        
+        writer  = SummaryWriter("runs/" + self.runName)
+        writer.add_image("Altered / Ouput",img_grid)
         writer.close
 
 
