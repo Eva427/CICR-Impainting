@@ -128,3 +128,4 @@ dmypy.json
 data/
 output/
 lfw.tgz
+runs/
