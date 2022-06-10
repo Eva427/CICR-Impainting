@@ -45,7 +45,7 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visu=None)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}')
+            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
             
         if visu:
             visu(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
