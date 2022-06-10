@@ -19,7 +19,7 @@ def getData(path,**kwargs):
     process = transforms.Compose(
         [transforms.Resize(resize), 
          transforms.CenterCrop(crop),
-         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+         # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
          transforms.ToTensor()])
     
     dataset = ImageFolder(path, process)
