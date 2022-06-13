@@ -17,15 +17,19 @@ crop   = (64 , 64 )
 
 def getData(path,**kwargs):
     process = transforms.Compose(
-        [transforms.Resize(resize), transforms.CenterCrop(crop),transforms.ToTensor()])
+        [transforms.Resize(resize), 
+         transforms.CenterCrop(crop),
+         # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+         transforms.ToTensor()])
+    
     dataset = ImageFolder(path, process)
     lengths = [sizeTrain, sizeTest]
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces():
+def getFaces(batch_size=32):
     return getData(path='data/lfw', 
-                    batch_size=128, 
+                    batch_size=batch_size, 
                     shuffle=True, 
                     num_workers=2)
 

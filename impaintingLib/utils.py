@@ -1,6 +1,7 @@
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
+from statistics import mean
 import torch
 
 class Visu :
@@ -12,9 +13,9 @@ class Visu :
         
         self.count    = 0
         self.gridSize = 16
-        self.figSize  = (20,15)
+        self.figSize  = (80,60)
 
-    def plot_img(self,images):
+    def plot_img(self,images,**kwargs):
         self.count += 1
         images = torch.clip(images[:self.gridSize],0,1)
         img_grid = make_grid(images)
@@ -36,15 +37,29 @@ class Visu :
     def plot_last_img(self,**kwargs):
         self.plot_img(kwargs["x_hat"])
         
-    def board_plot_last(self,**kwargs):
-        writer = SummaryWriter("runs/" + self.runName)
-        label = "x_hat"
-        images  = kwargs[label]
-        images = torch.clip(images[:self.gridSize],0,1)
+    def board_plot_last_img(self,**kwargs):
+        images_prime = kwargs["x_prime"].cuda()
+        images_hat   = kwargs["x_hat"].cuda()
+        
+        images = torch.cat((images_prime[:self.gridSize],images_hat[:self.gridSize]))
+        images = torch.clip(images,0,1)
         img_grid = make_grid(images)
-        writer.add_image(label,img_grid)
+        
+        writer  = SummaryWriter("runs/" + self.runName)
+        writer.add_image("Altered / Ouput",img_grid)
         writer.close
-
-
-# Visualisation
-# courbe evolution loss
+        
+    def board_loss(self,**kwargs):
+        running_loss = kwargs["running_loss"]
+        epoch        = kwargs["epoch"]
+        
+        writer = SummaryWriter("runs/" + self.runName)
+        writer.add_scalar("training loss", mean(running_loss), epoch)
+        writer.close()
+        
+    def full_board(self,**kwargs):
+        self.board_plot_last_img(**kwargs)
+        self.board_loss(**kwargs)
+        
+    def none(self,**kwargs):
+        pass

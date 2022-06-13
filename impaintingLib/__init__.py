@@ -1,7 +1,7 @@
-from .models import *
-from .losses import *
+from .model import __init__
 
 from .data import *
-from .mask import *
-from .utils import *
+from .loss import *
+from .mask import * 
 from .process import *
+from .utils import *

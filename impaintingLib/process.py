@@ -5,7 +5,23 @@ from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None, runName=""):
+def pathFromRunName(runName):
+    modelSavePrefix = "./modelSave/"
+    runName = runName.replace(" ","_")
+    path = modelSavePrefix + runName + ".pth"
+    return path
+
+def model_save(model, runName):
+    path = pathFromRunName(runName)
+    torch.save(model.state_dict(), path)
+
+def model_load(model, runName):
+    path = pathFromRunName(runName)
+    model.load_state_dict(torch.load(path))
+    model.eval()
+    return model
+
+def train(model, optimizer, loader, criterions, epochs=5, alter=None, visu=None):
 
     for epoch in range(epochs):
         running_loss = []
@@ -20,24 +36,19 @@ def train(model, optimizer, loader, criterion, epochs=5, alter=None, visu=None, 
                 x_prime = x
 
             x_hat = model(x_prime.cuda())
-            loss = criterion(x_hat, x)
+            loss  = 0
+            
+            for criterion in criterions :
+                loss += criterion(x_hat, x)
 
-            running_loss.append(loss.item())
+            running_loss.append(loss.item()/len(criterions))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}')
+            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
             
-        if runName:
-            writer = SummaryWriter("runs/" + runName)
-            writer.add_scalar("training loss", mean(running_loss), epoch)
-            writer.close()
-
         if visu:
-            visu(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch)
-
-def pre_train(model, path):
-    return model.load_state_dict(torch.load(path))
+            visu(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
 
 def test(model, testloader, alter=None, visu=None):
     
