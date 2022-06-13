@@ -15,7 +15,7 @@ class Visu :
         self.gridSize = 16
         self.figSize  = (80,60)
 
-    def plot_img(self,images):
+    def plot_img(self,images,**kwargs):
         self.count += 1
         images = torch.clip(images[:self.gridSize],0,1)
         img_grid = make_grid(images)
@@ -60,3 +60,6 @@ class Visu :
     def full_board(self,**kwargs):
         self.board_plot_last_img(**kwargs)
         self.board_loss(**kwargs)
+        
+    def none(self,**kwargs):
+        pass

@@ -23,6 +23,9 @@ class Alter :
             cut_img[:, h22:h22 + h11, w22:w22 + w22] = 0
             cutouts[i] = cut_img
         return cutouts
+    
+    def none(self):
+        pass
 
 
 # Generate random mask
