@@ -3,6 +3,20 @@ import torchvision.models as models
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+####################################
+# Total Variation loss
+####################################
+
+def totalVariationLoss(x_hat,x=0):
+    loss = torch.mean(torch.abs(x_hat[:, :, :, :-1] - x_hat[:, :, :, 1:])) + \
+            torch.mean(torch.abs(x_hat[:, :, :-1, :] - x_hat[:, :, 1:, :]))
+    return torch.mean(loss)
+
+
+####################################
+# Perceptual loss
+####################################
+
 def gram_matrix(input):
     a, b, c, d = input.size()   # a=batch size(=1)
                                 # b=number of feature maps
@@ -51,3 +65,7 @@ def perceptual_loss(x, y):
         loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
         
     return loss
+
+####################################
+# 
+####################################
