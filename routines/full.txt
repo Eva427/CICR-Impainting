@@ -1,0 +1,16 @@
+30
+
+model=autoencode loss=L1
+model=unet loss=L1
+model=unetpartial loss=L1
+model=subpixel loss=L1
+
+model=autoencode loss=perceptual
+model=unet loss=perceptual
+model=unetpartial loss=perceptual
+model=subpixel loss=perceptual
+
+model=autoencode loss=totalvar,perceptual,L1
+model=unet loss=totalvar,perceptual,L1
+model=unetpartial loss=totalvar,perceptual,L1
+model=subpixel loss=totalvar,perceptual,L1

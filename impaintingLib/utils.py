@@ -46,7 +46,18 @@ class Visu :
         img_grid = make_grid(images)
         
         writer  = SummaryWriter("runs/" + self.runName)
-        writer.add_image("Altered / Ouput",img_grid)
+        
+        images = torch.cat((images_prime[:self.gridSize],images_hat[:self.gridSize]))
+        images = torch.clip(images,0,1)
+        img_grid = make_grid(images)
+        writer.add_image("Altered",img_grid)
+        
+        
+        images = images_hat[:self.gridSize]
+        images = torch.clip(images,0,1)
+        img_grid = make_grid(images)
+        writer.add_image("Output",img_grid)
+        
         writer.close
         
     def board_loss(self,**kwargs):
