@@ -3,12 +3,16 @@ import torch
 
 class Alter :
 
-    def __init__(self, min_cut=15, max_cut=45):
+    def __init__(self, min_cut=15, max_cut=45, seed=0):
         self.min_cut = min_cut
         self.max_cut = max_cut
+        self.seed    = seed
 
     # Generate square mask
     def squareMask(self,imgs):
+        
+        np.random.seed(self.seed)
+        
         n, c, h, w = imgs.shape
         w1 = np.random.randint(self.min_cut, self.max_cut, n)
         h1 = np.random.randint(self.min_cut, self.max_cut, n)

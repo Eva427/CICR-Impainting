@@ -27,10 +27,10 @@ def getData(path,**kwargs):
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces(batch_size=32):
+def getFaces(batch_size=32,shuffle=True):
     return getData(path='data/lfw', 
                     batch_size=batch_size, 
-                    shuffle=True, 
+                    shuffle=shuffle, 
                     num_workers=2)
 
 # getCeleba

@@ -3,6 +3,8 @@ from statistics import mean
 from tqdm.notebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
+import impaintingLib as imp
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def pathFromRunName(runName):
@@ -21,7 +23,7 @@ def model_load(model, runName):
     model.eval()
     return model
 
-def train(model, optimizer, loader, criterions, epochs=5, alter=None, visu=None):
+def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None):
 
     for epoch in range(epochs):
         running_loss = []
@@ -47,20 +49,29 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visu=None)
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
             
-        if visu:
-            visu(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
+        if visuFuncs:
+            for visuFunc in visuFuncs : 
+                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
 
-def test(model, testloader, alter=None, visu=None):
+def test(model, loader, alter=None, visuFuncs=None):
     
     with torch.no_grad():
-        x, _ = next(iter(testloader))
+        
+        running_loss = []
+        t = tqdm(loader)
+        for x, _ in t:
+            x = x.to(device)
 
-        if alter :
-            x_prime = alter(x)
-        else : 
-            x_prime = x
+            if alter :
+                x_prime = alter(x)
+            else : 
+                x_prime = x
 
-        x_hat = model(x_prime.cuda())
+            x_hat = model(x_prime.cuda())
+            loss = imp.loss.perceptual_loss(x,x_hat)
+            running_loss.append(loss.item())
+            t.set_description(f'testing loss: {mean(running_loss)}')
     
-    if visu:
-        visu(x=x, x_prime=x_prime, x_hat=x_hat)
+        if visuFuncs:
+            for visuFunc in visuFuncs : 
+                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=0, running_loss=running_loss)
