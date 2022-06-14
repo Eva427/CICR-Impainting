@@ -53,22 +53,20 @@ class Visu :
         
     #--------- BOARD
         
-    def board_plot_last_img(self,**kwargs):
+    def board_plot_img(self,**kwargs):
         images_prime = kwargs["x_prime"].cuda()
         images_hat   = kwargs["x_hat"].cuda()
         
-        images = torch.cat((images_prime[:self.gridSize],images_hat[:self.gridSize]))
-        images = torch.clip(images,0,1)
-        img_grid = make_grid(images)
+        dir_path = "runs/{}/altered".format(self.expeName)
+        if not os.path.exists(dir_path) :
+            writer  = SummaryWriter(dir_path)
+            images = images_prime[:self.gridSize]
+            images = torch.clip(images,0,1)
+            img_grid = make_grid(images)
+            writer.add_image("Altered",img_grid)
+            writer.close()
         
         writer  = SummaryWriter("runs/{}/{}".format(self.expeName,self.runName))
-        
-        images = torch.cat((images_prime[:self.gridSize],images_hat[:self.gridSize]))
-        images = torch.clip(images,0,1)
-        img_grid = make_grid(images)
-        writer.add_image("Altered",img_grid)
-        
-        
         images = images_hat[:self.gridSize]
         images = torch.clip(images,0,1)
         img_grid = make_grid(images)
