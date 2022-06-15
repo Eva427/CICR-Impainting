@@ -49,6 +49,10 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
             
+        x       = imp.data.inv_normalize(x)
+        x_prime = imp.data.inv_normalize(x_prime)
+        x_hat   = imp.data.inv_normalize(x_hat)
+            
         if visuFuncs:
             for visuFunc in visuFuncs : 
                 visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
@@ -71,6 +75,10 @@ def test(model, loader, alter=None, visuFuncs=None):
             loss = imp.loss.perceptual_loss(x,x_hat)
             running_loss.append(loss.item())
             t.set_description(f'testing loss: {mean(running_loss)}')
+            
+        x       = imp.data.inv_normalize(x)
+        x_prime = imp.data.inv_normalize(x_prime)
+        x_hat   = imp.data.inv_normalize(x_hat)
     
         if visuFuncs:
             for visuFunc in visuFuncs : 

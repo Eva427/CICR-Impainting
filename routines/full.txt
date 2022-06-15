@@ -1,4 +1,4 @@
-30
+120
 
 model=autoencode loss=L1
 model=unet loss=L1
