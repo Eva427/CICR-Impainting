@@ -1,0 +1,7 @@
+120
+
+model=unet loss=totalvar,perceptual,L1
+model=unetpartial loss=totalvar,perceptual,L1
+
+model=unet loss=50*totalvar,50*perceptual,50*L1
+model=unetpartial loss=50*totalvar,50*perceptual,50*L1
