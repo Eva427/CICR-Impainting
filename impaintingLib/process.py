@@ -40,8 +40,8 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=
             x_hat = model(x_prime.cuda())
             loss  = 0
             
-            for criterion in criterions :
-                loss += criterion(x_hat, x)
+            for coef,criterion in criterions :
+                loss += criterion(x_hat, x)*coef
 
             running_loss.append(loss.item()/len(criterions))
             optimizer.zero_grad()
