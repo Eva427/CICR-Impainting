@@ -2,13 +2,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .partialConvo import PartialConv2d
+import impaintingLib.model.layer as layer
 
 class DoublePartialConv(nn.Module):
     def __init__(self, in_channels, out_channels, activation='relu'):
         super(DoublePartialConv, self).__init__()
-        self.conv1 = PartialConv2d(in_channels, out_channels, 3, padding=1, return_mask=True)
-        self.conv2 = PartialConv2d(out_channels, out_channels, 3, padding=1, return_mask=True)
+        self.conv1 = layer.PartialConv2d(in_channels, out_channels, 3, padding=1, return_mask=True)
+        self.conv2 = layer.PartialConv2d(out_channels, out_channels, 3, padding=1, return_mask=True)
         if activation == 'leakyrelu':
             self.activtion = nn.LeakyReLU(0.2)
         else: 
@@ -57,7 +57,7 @@ class UNetPartialConv(nn.Module):
     def __init__(self):
         super().__init__()
                 
-        self.downsample_block_1 = DownSamplePartialBlock(3, 64)
+        self.downsample_block_1 = DownSamplePartialBlock(4, 64)
         self.downsample_block_2 = DownSamplePartialBlock(64, 128)
         self.middle_conv_block = DoublePartialConv(128, 256)        
 

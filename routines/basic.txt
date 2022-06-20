@@ -1,4 +1,6 @@
-1
+1,save
 
-model=autoencode loss=L1
-model=unet loss=L1
+model=autoenco loss=L1
+model=subpixel loss=L1
+model=partial loss=L1
+model=unet loss=L1,percep,totalvar

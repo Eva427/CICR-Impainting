@@ -5,7 +5,7 @@ class AutoEncoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=4, stride=2),
+            nn.Conv2d(in_channels=4, out_channels=32, kernel_size=4, stride=2),
             nn.ReLU(True),
             nn.BatchNorm2d(32),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),

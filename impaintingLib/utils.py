@@ -11,7 +11,7 @@ class Visu :
     def __init__(self, expeName = "default", runName = "default", save = False):
         self.runName  = runName
         self.expeName = expeName
-        self.path = "./output/{}/{}.png".format(expeName,runName)
+        self.path = "./savedImages/{}/{}.png".format(expeName,runName)
         self.save = save
         
         self.count    = 0
@@ -30,7 +30,7 @@ class Visu :
         
         if self.save :
             dir_path = "/".join(self.path.split("/")[:-1])
-            if os.path.exists(dir_path) :
+            if not os.path.exists(dir_path) :
                 os.makedirs(dir_path)
                 
             variable_path = self.path[:-4] + str(self.count) + self.path[-4:] 

@@ -41,7 +41,7 @@ class UpSampleBlock(nn.Module):
 
 class UNet(nn.Module):
 
-    def __init__(self, in_channels=3, out_channels=3):
+    def __init__(self, in_channels=4, out_channels=3):
         super().__init__()
                 
         self.downsample_block_1 = DownSampleBlock(in_channels, 64)
