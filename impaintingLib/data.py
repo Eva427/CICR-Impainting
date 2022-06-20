@@ -16,22 +16,27 @@ crop   = (64 , 64 )
 #     !mv lfw data > /dev/null 2>&1
 
 def getData(path,**kwargs):
-    process = transforms.Compose(
-        [transforms.Resize(resize), 
+    transformations = [
+         transforms.Resize(resize), 
          transforms.CenterCrop(crop),
-         transforms.ToTensor(),
-         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
-         ])
+         transforms.ToTensor()
+    ]
     
+    if kwargs["doNormalize"] :
+        transformations.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                     std=[0.229, 0.224, 0.225]))
+    
+    kwargs.pop("doNormalize")
+    process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
     lengths = [sizeTrain, sizeTest]
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces(batch_size=32,shuffle=True):
+def getFaces(batch_size=32,shuffle=True,doNormalize=True):
     return getData(path='data/lfw', 
                     batch_size=batch_size, 
+                    doNormalize=doNormalize,
                     shuffle=shuffle, 
                     num_workers=2)
 
