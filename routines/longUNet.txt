@@ -1,3 +1,0 @@
-1200,save
-model=unet loss=totalvar,perceptual,L1
-model=unetpartial loss=totalvar,perceptual,L1
