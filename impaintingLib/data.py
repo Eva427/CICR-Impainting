@@ -15,6 +15,14 @@ crop   = (64 , 64 )
 #     !mkdir data > /dev/null 2>&1
 #     !mv lfw data > /dev/null 2>&1
 
+def addChannel(imgs):
+    n, c, h, w = imgs.shape
+    all_img = torch.empty((n, 4, h, w), dtype=imgs.dtype, device=imgs.device)
+    for i,img in enumerate(imgs):
+        blank_layer = torch.full((1,h,w),255, dtype=img.dtype, device=img.device)
+        all_img[i] = torch.cat((img,blank_layer),0)
+    return all_img
+
 def getData(path,**kwargs):
     transformations = [
          transforms.Resize(resize), 
