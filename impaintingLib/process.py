@@ -49,9 +49,9 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
             
-        #x       = imp.data.inv_normalize(x)
+        x       = imp.data.inv_normalize(x)
         #x_prime = imp.data.inv_normalize(x_prime)
-        #x_hat   = imp.data.inv_normalize(x_hat)
+        x_hat   = imp.data.inv_normalize(x_hat)
             
         if visuFuncs:
             for visuFunc in visuFuncs : 
@@ -72,13 +72,16 @@ def test(model, loader, alter=None, visuFuncs=None):
                 x_prime = x
 
             x_hat = model(x_prime.cuda())
-            loss = imp.loss.perceptualVGG(x,x_hat)
+            loss = imp.loss.perceptualVGG(x,x_hat)  
+            loss += imp.loss.totalVariation(x_hat)
+            loss += torch.nn.L1Loss()(x,x_hat)
+            
             running_loss.append(loss.item())
             t.set_description(f'testing loss: {mean(running_loss)}')
             
-        #x       = imp.data.inv_normalize(x)
+        x       = imp.data.inv_normalize(x)
         #x_prime = imp.data.inv_normalize(x_prime)
-        #x_hat   = imp.data.inv_normalize(x_hat)
+        x_hat   = imp.data.inv_normalize(x_hat)
     
         if visuFuncs:
             for visuFunc in visuFuncs : 
