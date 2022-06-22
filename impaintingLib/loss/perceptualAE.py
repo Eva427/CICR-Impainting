@@ -20,7 +20,7 @@ def trainAE(model):
     
     visu = imp.utils.Visu(runName = "TrainPercepLoss", expeName="AEModel")
     
-    for i in range(5):
+    for i in range(50):
         visuFuncs = []
         imp.process.train(model, optimizer, trainloader, criterions, epochs=10, visuFuncs=visuFuncs)
         torch.save(model.state_dict(), modelPath)
@@ -49,8 +49,8 @@ def perceptualAE(x, y):
     y_feats = model.encoder(y)
     
     loss = 0
-    loss += mse(gram_matrix(x_feats), gram_matrix(y_feats))
-    #loss = mse(x_feats,y_feats)
+    #loss += mse(gram_matrix(x_feats), gram_matrix(y_feats))
+    loss = mse(x_feats,y_feats)
         
     return loss
     

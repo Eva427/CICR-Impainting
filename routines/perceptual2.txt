@@ -1,3 +1,0 @@
-50
-model=unet loss=perceptualAE
-model=unet loss=perceptualVGG

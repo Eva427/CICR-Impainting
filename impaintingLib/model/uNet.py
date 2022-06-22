@@ -1,68 +1,126 @@
 import torch
-import torch.nn as nn
+import torch.nn.functional as F
+from torch import nn
 
-def double_conv(in_channels, out_channels):
-    
-    # returns a block composed of two Convolution layers with ReLU activation function
-    return nn.Sequential(
-        nn.Conv2d(in_channels, out_channels, 3, padding=1),
-        nn.ReLU(),
-        nn.Conv2d(out_channels, out_channels, 3, padding=1),
-        nn.ReLU()
-    )   
+import impaintingLib.model.layer as layer
+
+
+
+class DoubleConv(nn.Module):
+
+    def __init__(self, in_channels, out_channels, netType, convType, activation='relu'):
+        super().__init__()
+        self.netType  = netType
+        self.convType = convType
+
+        if "conv2d" in self.convType :
+            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+        else : 
+            # temporaire
+            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+
+        self.convPartial1 = layer.PartialConv2d(in_channels, out_channels, 3, padding=1, return_mask=True)
+        self.convPartial2 = layer.PartialConv2d(out_channels, out_channels, 3, padding=1, return_mask=True)
+
+        if activation == 'leakyrelu':
+            self.activtion = nn.LeakyReLU(0.2)
+        else: 
+            self.activtion = nn.ReLU()
+
+    def forward(self, x, m):
+
+        if "partial" in self.netType :
+            x, m = self.convPartial1(x, m)
+            x = self.activtion(x)
+            x, m = self.convPartial2(x, m)
+            x = self.activtion(x)
+
+        else : 
+            x = self.conv1(x)
+            x = self.activtion(x)
+            x = self.conv2(x)
+            x = self.activtion(x)
+
+        return x, m
+
 
 class DownSampleBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, netType, convType):
         super().__init__()
-        self.conv_block = double_conv(in_channels, out_channels)
+        self.netType = netType
+
+        self.conv_block = DoubleConv(in_channels, out_channels, netType, convType)
         self.maxpool = nn.MaxPool2d(2) 
 
-    def forward(self, x):
-        x_skip = self.conv_block(x)
+    def forward(self, x, m):
+
+        x_skip, m_skip = self.conv_block(x, m)
         x = self.maxpool(x_skip)
 
-        return x , x_skip
+        if "partial" in self.netType :
+            m = self.maxpool(m)
+        return x, m , x_skip, m_skip
 
 class UpSampleBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, netType, convType):
         super().__init__()
-        self.conv_block = double_conv(in_channels, out_channels)
+        self.netType = netType
+
+        self.conv_block = DoubleConv(in_channels, out_channels, netType, convType) #, activation='leakyrelu')
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-    def forward(self, x, x_skip):
+    def forward(self, x, m, x_skip, m_skip):
         x = self.upsample(x)
+
+        if "partial" in self.netType :
+            m = self.upsample(m)
+
         x = torch.cat([x, x_skip], dim=1)
-        x = self.conv_block(x)
-        
-        return x
+        # m = torch.cat([m, m_skip], dim=1)
+
+        x, m = self.conv_block(x, m)
+        return x, m    
     
-
-class UNet(nn.Module):
-
-    def __init__(self, in_channels=4, out_channels=3):
+class UNet(nn.Module) : 
+        
+    def __init__(self, netType="default", convType="conv2d"):
         super().__init__()
                 
-        self.downsample_block_1 = DownSampleBlock(in_channels, 64)
-        self.downsample_block_2 = DownSampleBlock(64, 128)
-        self.middle_conv_block = double_conv(128, 256)        
-  
-        self.upsample_block_2 = UpSampleBlock(128 + 256, 128)
-        self.upsample_block_1 = UpSampleBlock(128 + 64, 64)
+        self.downsample_block_1 = DownSampleBlock(4, 64, netType, convType)
+        self.downsample_block_2 = DownSampleBlock(64, 128, netType, convType)
         
-        self.last_conv = nn.Conv2d(64, out_channels, 1)
+        self.middle_conv_block = DoubleConv(128, 256, netType, convType)        
+            
+        self.upsample_block_2 = UpSampleBlock(128 + 256, 128, netType, convType)
+        self.upsample_block_1 = UpSampleBlock(128 + 64, 64, netType, convType)
         
+        self.netType = netType
+        self.convType = convType
+        
+        if "conv2d" in self.convType :
+            self.last_conv = nn.Conv2d(64, 3, 1)
+        else : 
+            #temporaire
+            self.last_conv = nn.Conv2d(64, 3, 1)
         
     def forward(self, x):
-        x, x_skip1 = self.downsample_block_1(x)
-        x, x_skip2 = self.downsample_block_2(x)
         
-        x = self.middle_conv_block(x)
+        if "partial" in self.netType :
+            m = ((x[-1] != 0)*1.)
+        else :
+            m = None
         
-        x = self.upsample_block_2(x, x_skip2) 
-        x = self.upsample_block_1(x, x_skip1)
+        x, m, x_skip1, m_skip1 = self.downsample_block_1(x, m)
+        x, m, x_skip2, m_skip2 = self.downsample_block_2(x, m)
+        
+        x, m = self.middle_conv_block(x, m)
+        
+        x, m = self.upsample_block_2(x, m, x_skip2, m_skip2) 
+        x, m = self.upsample_block_1(x, m, x_skip1, m_skip1)
         
         out = self.last_conv(x)
-        
         return out
