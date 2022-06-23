@@ -89,7 +89,7 @@ class UNet(nn.Module) :
         
     def __init__(self, netType="default", convType="conv2d"):
         super().__init__()
-                
+                                                # 4
         self.downsample_block_1 = DownSampleBlock(4, 64, netType, convType)
         self.downsample_block_2 = DownSampleBlock(64, 128, netType, convType)
         
@@ -110,10 +110,10 @@ class UNet(nn.Module) :
     def forward(self, x):
         
         if "partial" in self.netType :
-            m = ((x[-1] != 0)*1.)
+            m = ((x[:,-1:] != 0)*1.)
         else :
             m = None
-        
+            
         x, m, x_skip1, m_skip1 = self.downsample_block_1(x, m)
         x, m, x_skip2, m_skip2 = self.downsample_block_2(x, m)
         

@@ -1,0 +1,6 @@
+30,save
+
+model=partial loss=1000*perceptualAE,L1,totalvar
+model=unet loss=perceptualVGG,L1,totalvar
+model=partial loss=1000*perceptualAE,L1,totalvar
+model=autoencode loss=perceptualVGG,L1,totalvar

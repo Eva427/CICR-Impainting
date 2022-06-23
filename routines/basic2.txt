@@ -1,3 +1,0 @@
-2
-
-model=autoencode loss=L2

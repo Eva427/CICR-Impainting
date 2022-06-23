@@ -11,13 +11,17 @@ class Alter :
     # Propage le masque généré sur tous les channels
     def propagate(self,imgs,masks):
         
-        n, c, h, w = imgs.shape
+        n, c, h, w = imgs.shape     # 4
         imgs_masked = torch.empty((n, 4, h, w), dtype=imgs.dtype, device=imgs.device)
         for i, (img, mask) in enumerate(zip(imgs, masks)):
+            propag_img = img.clone()
             mask_bit = (mask != 0) * 1.
             for j,channel in enumerate(img) :
-                img[j] = channel * mask_bit
-            imgs_masked[i] = torch.cat((img,mask),0)
+                propag_img[j] = channel * mask_bit
+                
+            imgs_masked[i] = torch.cat((propag_img,mask),0)
+            #imgs_masked[i] = propag_img
+            
         return imgs_masked
     
     # Generate square mask
@@ -40,6 +44,25 @@ class Alter :
             
         imgs_masked = self.propagate(imgs,masks)
         return imgs_masked
+    
+    # Generate square mask
+    def OldsquareMask(self,imgs):
+        
+        np.random.seed(self.seed)
+        n, c, h, w = imgs.shape
+        w1 = np.random.randint(self.min_cut, self.max_cut, n)
+        h1 = np.random.randint(self.min_cut, self.max_cut, n)
+        
+        w2 = np.random.randint(self.min_cut, self.max_cut, n)
+        h2 = np.random.randint(self.min_cut, self.max_cut, n)
+        
+        cutouts = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
+        for i, (img, w11, h11, w22, h22) in enumerate(zip(imgs, w1, h1, w2, h2)):
+            cut_img = img.clone()
+            cut_img[:, h11:h11 + h11, w11:w11 + w11] = 0
+            cut_img[:, h22:h22 + h11, w22:w22 + w22] = 0
+            cutouts[i] = cut_img
+        return cutouts
     
     def none(self):
         pass
