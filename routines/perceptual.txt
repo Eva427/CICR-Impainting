@@ -1,4 +1,4 @@
-120,save
+1,save
 
 model=unet loss=perceptualVGG,L2,totalvar
 model=unet loss=1000*perceptualAE,L2,totalvar

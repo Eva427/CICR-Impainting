@@ -4,8 +4,6 @@ from torch import nn
 
 import impaintingLib.model.layer as layer
 
-
-
 class DoubleConv(nn.Module):
 
     def __init__(self, in_channels, out_channels, netType, convType, activation='relu'):
@@ -17,9 +15,8 @@ class DoubleConv(nn.Module):
             self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
             self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
         else : 
-            # temporaire
-            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
-            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1, dilation=2)
+            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1, dilation=2)
 
         self.convPartial1 = layer.PartialConv2d(in_channels, out_channels, 3, padding=1, return_mask=True)
         self.convPartial2 = layer.PartialConv2d(out_channels, out_channels, 3, padding=1, return_mask=True)
@@ -104,8 +101,7 @@ class UNet(nn.Module) :
         if "conv2d" in self.convType :
             self.last_conv = nn.Conv2d(64, 3, 1)
         else : 
-            #temporaire
-            self.last_conv = nn.Conv2d(64, 3, 1)
+            self.last_conv = nn.Conv2d(64, 3, 1, dilation=2)
         
     def forward(self, x):
         

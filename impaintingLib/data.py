@@ -33,6 +33,8 @@ def getData(path,**kwargs):
     if kwargs["doNormalize"] :
         transformations.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                      std=[0.229, 0.224, 0.225]))
+    if not kwargs["shuffle"] :
+        torch.manual_seed(0)
     
     kwargs.pop("doNormalize")
     process = transforms.Compose(transformations)

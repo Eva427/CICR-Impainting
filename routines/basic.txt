@@ -1,3 +1,4 @@
 1
 
-model=partial loss=L1
+# model=autoencoder loss=L1
+model=autoencoder loss=L1
