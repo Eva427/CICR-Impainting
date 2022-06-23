@@ -1,11 +1,11 @@
 120,save
-model=unet loss=perceptualAE,L2
-model=unet loss=perceptualVGG,L2
 
-model=unet loss=perceptualAE,L2,totalvar
 model=unet loss=perceptualVGG,L2,totalvar
-
-model=unet loss=10*perceptualAE,L2,totalvar
-model=unet loss=100*perceptualAE,L2,totalvar
 model=unet loss=1000*perceptualAE,L2,totalvar
-model=unet loss=5000*perceptualAE,L2,totalvar
+model=unet loss=1000*perceptualAE,L1,totalvar
+model=unet loss=5000*perceptualAE,L1,totalvar
+
+model=partial loss=perceptualVGG,L2,totalvar
+model=partial loss=1000*perceptualAE,L2,totalvar
+model=partial loss=1000*perceptualAE,L1,totalvar
+model=partial loss=5000*perceptualAE,L1,totalvar
