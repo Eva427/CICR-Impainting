@@ -50,9 +50,13 @@ def getFaces(batch_size=32,shuffle=True,doNormalize=True):
                     shuffle=shuffle, 
                     num_workers=2)
 
-inv_normalize = transforms.Normalize(
-   mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
-   std=[1/0.229, 1/0.224, 1/0.225])
+def inv_normalize(x):
+    transfo = transforms.Normalize(
+                       mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
+                       std=[1/0.229, 1/0.224, 1/0.225])
+    x = x[:,:3]
+    x = transfo(x)
+    return x
 
 #inv_tensor = inv_normalize(tensor)
 

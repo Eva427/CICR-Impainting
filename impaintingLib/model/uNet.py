@@ -15,8 +15,9 @@ class DoubleConv(nn.Module):
             self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
             self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
         else : 
-            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1, dilation=2)
-            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1, dilation=2)
+            # normalement dilatation=2 mais erreur ici
+            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1, dilation=1)
+            self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1, dilation=1)
 
         self.convPartial1 = layer.PartialConv2d(in_channels, out_channels, 3, padding=1, return_mask=True)
         self.convPartial2 = layer.PartialConv2d(out_channels, out_channels, 3, padding=1, return_mask=True)
@@ -101,7 +102,8 @@ class UNet(nn.Module) :
         if "conv2d" in self.convType :
             self.last_conv = nn.Conv2d(64, 3, 1)
         else : 
-            self.last_conv = nn.Conv2d(64, 3, 1, dilation=2)
+            # normalement dilatation=2 mais erreur ici
+            self.last_conv = nn.Conv2d(64, 3, 1, dilation=1)
         
     def forward(self, x):
         
@@ -120,3 +122,6 @@ class UNet(nn.Module) :
         
         out = self.last_conv(x)
         return out
+    
+    def __str__(self):
+        return("UNet({} {})".format(self.netType, self.convType))

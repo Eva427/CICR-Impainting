@@ -2,6 +2,7 @@ import torch
 from statistics import mean
 from tqdm.notebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import os
 
 import impaintingLib as imp
 
@@ -10,20 +11,29 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def pathFromRunName(runName):
     modelSavePrefix = "./modelSave/"
     runName = runName.replace(" ","_")
-    path = modelSavePrefix + runName + ".pth"
+    path = modelSavePrefix + runName # + ".pth"
     return path
 
-def model_save(model, runName):
-    path = pathFromRunName(runName)
-    torch.save(model.state_dict(), path)
+def model_save(models, runName):
+    dir_path = pathFromRunName(runName)
+    if not os.path.exists(dir_path) :
+        os.makedirs(dir_path)
+        
+    for model in models :  
+        path = dir_path + "/" + str(model) + ".pth"
+        torch.save(model.state_dict(), path)
 
 def model_load(model, runName):
-    path = pathFromRunName(runName)
-    model.load_state_dict(torch.load(path))
-    model.eval()
-    return model
+    dir_path = pathFromRunName(runName)
+    for i,model in enumerate(models) :  
+        path = dir_path + "/" + str(model) + ".pth"
+        model.load_state_dict(torch.load(path))
+        model.eval()
+        models[i] = model
+    
+    return models
 
-def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None):
+def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None):
 
     for epoch in range(epochs):
         running_loss = []
@@ -37,9 +47,11 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=
             else : 
                 x_prime = x
 
-            x_hat = model(x_prime.cuda())
+            x_hat = x_prime.cuda()
+            for model in models:
+                x_hat = model(x_hat)
+                
             loss  = 0
-            
             for coef,criterion in criterions :
                 loss += criterion(x_hat, x)*coef
 
@@ -48,16 +60,16 @@ def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=
             loss.backward()
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
-            
+        
         x       = imp.data.inv_normalize(x)
-        #x_prime = imp.data.inv_normalize(x_prime)
+        x_prime = imp.data.inv_normalize(x_prime)
         x_hat   = imp.data.inv_normalize(x_hat)
             
         if visuFuncs:
             for visuFunc in visuFuncs : 
                 visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
 
-def test(model, loader, alter=None, visuFuncs=None):
+def test(models, loader, alter=None, visuFuncs=None):
     
     with torch.no_grad():
         
@@ -71,7 +83,10 @@ def test(model, loader, alter=None, visuFuncs=None):
             else : 
                 x_prime = x
 
-            x_hat = model(x_prime.cuda())
+            x_hat = x_prime.cuda()
+            for model in models:
+                x_hat = model(x_hat)
+                
             loss = imp.loss.perceptualVGG(x,x_hat)  
             loss += imp.loss.totalVariation(x_hat)
             loss += torch.nn.L1Loss()(x,x_hat)
@@ -80,7 +95,7 @@ def test(model, loader, alter=None, visuFuncs=None):
             t.set_description(f'testing loss: {mean(running_loss)}')
             
         x       = imp.data.inv_normalize(x)
-        #x_prime = imp.data.inv_normalize(x_prime)
+        x_prime = imp.data.inv_normalize(x_prime)
         x_hat   = imp.data.inv_normalize(x_hat)
     
         if visuFuncs:

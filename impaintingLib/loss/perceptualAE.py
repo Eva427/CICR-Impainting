@@ -2,7 +2,7 @@ import impaintingLib as imp
 import os 
 import torch
 
-modelPath = "./modelSave/perceptualAE_L1.pth"
+modelPath = "./modelSave/perceptualAE_L2.pth"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def gram_matrix(input):
@@ -16,7 +16,7 @@ def gram_matrix(input):
 def trainAE(model):
     optimizer               = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.001)
     trainloader, testloader = imp.data.getFaces(shuffle=False,doNormalize=False)
-    criterions              = [(1,torch.nn.L1Loss())]
+    criterions              = [(1,torch.nn.L2Loss())]
     
     visu = imp.utils.Visu(runName = "TrainPercepLoss", expeName="AEModel")
     

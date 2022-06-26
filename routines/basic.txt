@@ -1,4 +1,4 @@
-1
+1,save
 
-# model=autoencoder loss=L1
-model=autoencoder loss=L1
+model=unetpartial loss=L1
+# model=autoencoder loss=L1
