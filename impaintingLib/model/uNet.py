@@ -85,10 +85,10 @@ class UpSampleBlock(nn.Module):
     
 class UNet(nn.Module) : 
         
-    def __init__(self, netType="default", convType="conv2d"):
+    def __init__(self, in_channels=4, netType="default", convType="conv2d"):
         super().__init__()
-                                                # 4
-        self.downsample_block_1 = DownSampleBlock(4, 64, netType, convType)
+                                             
+        self.downsample_block_1 = DownSampleBlock(in_channels, 64, netType, convType)
         self.downsample_block_2 = DownSampleBlock(64, 128, netType, convType)
         
         self.middle_conv_block = DoubleConv(128, 256, netType, convType)        

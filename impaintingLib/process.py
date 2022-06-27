@@ -15,16 +15,26 @@ def pathFromRunName(runName):
     return path
 
 def model_save(models, runName):
-    dir_path = pathFromRunName(runName)
-    if not os.path.exists(dir_path) :
-        os.makedirs(dir_path)
-        
+    
+    # On ne crée et utilise un dossier que si il y'a plusieurs models
+    if len(models) < 2:
+        dir_path = "./modelSave"
+    else : 
+        dir_path = pathFromRunName(runName)
+        if not os.path.exists(dir_path) :
+            os.makedirs(dir_path)
+    
     for model in models :  
         path = dir_path + "/" + str(model) + ".pth"
         torch.save(model.state_dict(), path)
 
 def model_load(model, runName):
-    dir_path = pathFromRunName(runName)
+    
+    if len(models) < 2:
+        dir_path = "./modelSave"
+    else : 
+        dir_path = pathFromRunName(runName)
+    
     for i,model in enumerate(models) :  
         path = dir_path + "/" + str(model) + ".pth"
         model.load_state_dict(torch.load(path))
@@ -40,10 +50,12 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
         t = tqdm(loader)
 
         for x, _ in t:
+            # x = imp.data.randomTransfo(x)
             x = x.to(device)
 
             if alter :
                 x_prime = alter(x)
+                
             else : 
                 x_prime = x
 
@@ -80,6 +92,7 @@ def test(models, loader, alter=None, visuFuncs=None):
 
             if alter :
                 x_prime = alter(x)
+
             else : 
                 x_prime = x
 

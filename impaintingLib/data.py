@@ -58,6 +58,84 @@ def inv_normalize(x):
     x = transfo(x)
     return x
 
+# ------------- AUGMENTATION
+
+from PIL import Image, ImageEnhance
+import numpy as np
+import math
+import random
+
+def randomTransfo(imgs):
+    
+    def zoom(img,factor=0):
+        size = (width, height) = (img.size)
+
+        # Si on ne lui donne pas d'arg alors c'est aléatoire
+        if factor < 1 :
+            (mu,sigma) = (1,1)
+            factor = abs(factor)
+            factor = np.random.normal(mu, sigma)
+
+        (left, upper, right, lower) = (factor, factor, height-factor, width-factor)
+        img = img.crop((left, upper, right, lower))
+        img = img.resize(size)
+        return img
+
+    def rotation(img):
+        (mu,sigma) = (1,1)
+        factor = np.random.normal(mu, sigma)
+        factor = abs(factor)
+        img = img.rotate(factor)
+        img = zoom(img,20)
+        return img
+
+    def mirror(img):
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        return img
+
+    def enhance(img,enhancer):
+        (mu,sigma) = (1,0.01)
+        factor = np.random.normal(mu, sigma)
+        #print(factor)
+        img = enhancer.enhance(factor)
+        return img
+
+    def lumi(img):
+        func = ImageEnhance.Brightness(img)
+        return enhance(img,func)
+
+    def contrast(img):
+        func = ImageEnhance.Contrast(img)
+        return enhance(img,func)
+
+    def color(img):
+        func = ImageEnhance.Color(img)
+        return enhance(img,func)
+
+    def sharpness(img):
+        func = ImageEnhance.Sharpness(img)
+        return enhance(img,func)
+
+    # --- Process
+    (mu,sigma) = (1,0.15)
+    
+    for k,img in enumerate(imgs) : 
+        img = transforms.ToPILImage()(img)
+        nbTransfo = np.random.normal(mu, sigma)
+        nbTransfo = abs(nbTransfo)
+        nbTransfo = int(nbTransfo)
+
+        #print(nbTransfo)
+        transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
+        for i in range(nbTransfo):
+            func = random.choice(transfos)
+            #print(func. __name__)
+            transfos.remove(func)
+            img = func(img)
+            
+        imgs[k] = transforms.ToTensor()(img.copy())
+    return imgs
+
 #inv_tensor = inv_normalize(tensor)
 
 # getCeleba

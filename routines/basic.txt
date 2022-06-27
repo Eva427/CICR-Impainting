@@ -1,4 +1,5 @@
-1,save
+6
 
-model=unetpartial loss=L1
-# model=autoencoder loss=L1
+model=unetpartial,subpixel loss=L1,perceptualVGG,totalvar
+model=unetpartial,subpixel loss=L1,1000*perceptualAE,totalvar
+model=unetpartial,subpixel loss=L1,1000*perceptual,perceptualVGG,totalvar

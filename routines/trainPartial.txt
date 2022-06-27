@@ -1,0 +1,3 @@
+12,save
+
+model=unetpartial loss=L1,perceptualVGG,totalvar

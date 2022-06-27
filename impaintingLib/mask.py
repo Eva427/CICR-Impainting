@@ -12,22 +12,24 @@ class Alter :
     def propagate(self,imgs,masks):
         
         n, c, h, w = imgs.shape     # 4
-        imgs_masked = torch.empty((n, 4, h, w), dtype=imgs.dtype, device=imgs.device)
+        imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
         for i, (img, mask) in enumerate(zip(imgs, masks)):
             propag_img = img.clone()
             mask_bit = (mask != 0) * 1.
             for j,channel in enumerate(img) :
                 propag_img[j] = channel * mask_bit
                 
-            imgs_masked[i] = torch.cat((propag_img,mask),0)
-            #imgs_masked[i] = propag_img
+            #imgs_masked[i] = torch.cat((propag_img,mask),0)
+            imgs_masked[i] = propag_img
             
         return imgs_masked
     
     # Generate square mask
     def squareMask(self,imgs):
         
-        np.random.seed(self.seed)
+        if self.seed != 0:
+            np.random.seed(self.seed)
+        
         n, c, h, w = imgs.shape
         w1 = np.random.randint(self.min_cut, self.max_cut, n)
         h1 = np.random.randint(self.min_cut, self.max_cut, n)
@@ -44,6 +46,12 @@ class Alter :
             
         imgs_masked = self.propagate(imgs,masks)
         return imgs_masked
+    
+    def downScale(self,imgs, scale_factor=2, upscale=True):
+        imgs_low = torch.nn.MaxPool2d(kernel_size=scale_factor)(imgs)
+        if upscale:
+            imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
+        return imgs_low
     
     def none(self):
         pass

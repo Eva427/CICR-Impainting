@@ -1,0 +1,3 @@
+8,save
+
+model=subpixel loss=L1
