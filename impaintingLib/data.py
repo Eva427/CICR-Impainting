@@ -30,13 +30,9 @@ def getData(path,**kwargs):
          transforms.ToTensor()
     ]
     
-    if kwargs["doNormalize"] :
-        transformations.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                     std=[0.229, 0.224, 0.225]))
     if not kwargs["shuffle"] :
         torch.manual_seed(0)
     
-    kwargs.pop("doNormalize")
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
     lengths = [sizeTrain, sizeTest]
@@ -46,17 +42,19 @@ def getData(path,**kwargs):
 def getFaces(batch_size=32,shuffle=True,doNormalize=True):
     return getData(path='data/lfw', 
                     batch_size=batch_size, 
-                    doNormalize=doNormalize,
                     shuffle=shuffle, 
                     num_workers=2)
 
+def normalize(x):
+    transfo = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                   std =[0.229, 0.224, 0.225])
+    return transfo(x)
+
 def inv_normalize(x):
-    transfo = transforms.Normalize(
-                       mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
-                       std=[1/0.229, 1/0.224, 1/0.225])
+    transfo = transforms.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
+                                   std=[1/0.229, 1/0.224, 1/0.225])
     x = x[:,:3]
-    x = transfo(x)
-    return x
+    return transfo(x)
 
 # ------------- AUGMENTATION
 
@@ -65,59 +63,59 @@ import numpy as np
 import math
 import random
 
+def zoom(img,factor=0):
+    size = (width, height) = (img.size)
+
+    # Si on ne lui donne pas d'arg alors c'est aléatoire
+    if factor < 1 :
+        (mu,sigma) = (1,3)
+        factor = abs(factor)
+        factor = np.random.normal(mu, sigma)
+
+    (left, upper, right, lower) = (factor, factor, height-factor, width-factor)
+    img = img.crop((left, upper, right, lower))
+    img = img.resize(size)
+    return img
+
+def rotation(img):
+    (mu,sigma) = (1,1)
+    factor = np.random.normal(mu, sigma)
+    factor = abs(factor)
+    img = img.rotate(factor)
+    #img = zoom(img,20)
+    return img
+
+def mirror(img):
+    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def enhance(img,enhancer):
+    (mu,sigma) = (1,0.3)
+    factor = np.random.normal(mu, sigma)
+    #print(factor)
+    img = enhancer.enhance(factor)
+    return img
+
+def lumi(img):
+    func = ImageEnhance.Brightness(img)
+    return enhance(img,func)
+
+def contrast(img):
+    func = ImageEnhance.Contrast(img)
+    return enhance(img,func)
+
+def color(img):
+    func = ImageEnhance.Color(img)
+    return enhance(img,func)
+
+def sharpness(img):
+    func = ImageEnhance.Sharpness(img)
+    return enhance(img,func)
+
 def randomTransfo(imgs):
     
-    def zoom(img,factor=0):
-        size = (width, height) = (img.size)
-
-        # Si on ne lui donne pas d'arg alors c'est aléatoire
-        if factor < 1 :
-            (mu,sigma) = (1,1)
-            factor = abs(factor)
-            factor = np.random.normal(mu, sigma)
-
-        (left, upper, right, lower) = (factor, factor, height-factor, width-factor)
-        img = img.crop((left, upper, right, lower))
-        img = img.resize(size)
-        return img
-
-    def rotation(img):
-        (mu,sigma) = (1,1)
-        factor = np.random.normal(mu, sigma)
-        factor = abs(factor)
-        img = img.rotate(factor)
-        img = zoom(img,20)
-        return img
-
-    def mirror(img):
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        return img
-
-    def enhance(img,enhancer):
-        (mu,sigma) = (1,0.01)
-        factor = np.random.normal(mu, sigma)
-        #print(factor)
-        img = enhancer.enhance(factor)
-        return img
-
-    def lumi(img):
-        func = ImageEnhance.Brightness(img)
-        return enhance(img,func)
-
-    def contrast(img):
-        func = ImageEnhance.Contrast(img)
-        return enhance(img,func)
-
-    def color(img):
-        func = ImageEnhance.Color(img)
-        return enhance(img,func)
-
-    def sharpness(img):
-        func = ImageEnhance.Sharpness(img)
-        return enhance(img,func)
-
-    # --- Process
-    (mu,sigma) = (1,0.15)
+    #(mu,sigma) = (1,0.15)
+    (mu,sigma) = (1.3,0.4)
     
     for k,img in enumerate(imgs) : 
         img = transforms.ToPILImage()(img)
@@ -126,7 +124,8 @@ def randomTransfo(imgs):
         nbTransfo = int(nbTransfo)
 
         #print(nbTransfo)
-        transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
+        #transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
+        transfos = [mirror, lumi, contrast, color, sharpness]
         for i in range(nbTransfo):
             func = random.choice(transfos)
             #print(func. __name__)

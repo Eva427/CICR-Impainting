@@ -1,6 +1,12 @@
 import numpy as np
 import torch
 
+from torchvision import transforms
+from PIL import Image
+from os import listdir
+from os.path import isfile, join
+import random
+
 class Alter :
 
     def __init__(self, min_cut=15, max_cut=45, seed=0):
@@ -15,7 +21,7 @@ class Alter :
         imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
         for i, (img, mask) in enumerate(zip(imgs, masks)):
             propag_img = img.clone()
-            mask_bit = (mask != 0) * 1.
+            mask_bit = (mask == 0) * 1.
             for j,channel in enumerate(img) :
                 propag_img[j] = channel * mask_bit
                 
@@ -39,9 +45,9 @@ class Alter :
         
         masks = torch.empty((n, 1, h, w), dtype=imgs.dtype, device=imgs.device)
         for i, (img, w11, h11, w22, h22) in enumerate(zip(imgs, w1, h1, w2, h2)):
-            cut_img = torch.full((1,h,w),255, dtype=img.dtype, device=img.device)
-            cut_img[:, h11:h11 + h11, w11:w11 + w11] = 0
-            cut_img[:, h22:h22 + h11, w22:w22 + w22] = 0
+            cut_img = torch.full((1,h,w),0, dtype=img.dtype, device=img.device)
+            cut_img[:, h11:h11 + h11, w11:w11 + w11] = 1
+            cut_img[:, h22:h22 + h11, w22:w22 + w22] = 1
             masks[i] = cut_img
             
         imgs_masked = self.propagate(imgs,masks)
@@ -53,8 +59,22 @@ class Alter :
             imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
         return imgs_low
     
-    def none(self):
-        pass
+    def irregularMask(self,imgs):
+    
+        maskPath = "./data/masks/"
+        files = [f for f in listdir(maskPath) if isfile(join(maskPath, f))]
+        n,c,w,h = imgs.shape
+
+        masks = torch.empty((n, 1, h, w), dtype=imgs.dtype, device=imgs.device)
+        for i,img in enumerate(imgs) : 
+            path = maskPath + random.choice(files)
+            with Image.open(path) as mask:
+                mask = transforms.ToTensor()(mask)
+                mask = transforms.Resize((w,h))(mask)
+                masks[i] = mask
+
+        imgs_masked = self.propagate(imgs,masks)
+        return imgs_masked
 
 
 # Generate random mask

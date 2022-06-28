@@ -28,7 +28,7 @@ def model_save(models, runName):
         path = dir_path + "/" + str(model) + ".pth"
         torch.save(model.state_dict(), path)
 
-def model_load(model, runName):
+def model_load(models, runName):
     
     if len(models) < 2:
         dir_path = "./modelSave"
@@ -50,12 +50,13 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
         t = tqdm(loader)
 
         for x, _ in t:
-            # x = imp.data.randomTransfo(x)
+            x = imp.data.randomTransfo(x)
+            x = imp.data.normalize(x)
+            
             x = x.to(device)
 
             if alter :
-                x_prime = alter(x)
-                
+                x_prime = alter(x) 
             else : 
                 x_prime = x
 
@@ -66,6 +67,11 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
             loss  = 0
             for coef,criterion in criterions :
                 loss += criterion(x_hat, x)*coef
+                
+            #if (x[0] < 0).any() or ((x[0] > 1).any()) :
+            #    print("input pas entre 0 et 1")
+            #if (x_hat[0] < 0).any() or ((x_hat[0] > 1).any()) :
+            #    print("output pas entre 0 et 1")
 
             running_loss.append(loss.item()/len(criterions))
             optimizer.zero_grad()
@@ -88,6 +94,9 @@ def test(models, loader, alter=None, visuFuncs=None):
         running_loss = []
         t = tqdm(loader)
         for x, _ in t:
+            #x = imp.data.randomTransfo(x)
+            x = imp.data.normalize(x)
+            
             x = x.to(device)
 
             if alter :
