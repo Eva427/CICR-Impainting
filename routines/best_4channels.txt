@@ -1,0 +1,3 @@
+13,save
+
+model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar

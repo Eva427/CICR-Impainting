@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 from statistics import mean
 
+from torchvision import transforms
 import torch
 import os
 
@@ -50,6 +51,24 @@ class Visu :
         self.plot_original_img(kwargs)
         self.plot_altered_img(kwargs)
         self.plot_res_img(kwargs)
+        
+   #--------- PLOT and save     
+        
+    def indiv_img(self,images,title,**kwargs):
+        for i,image in enumerate(images) : 
+            image = transforms.ToPILImage()(image)
+            path = "./savedImages/yanis/{}{}.jpg"
+            image.save(path.format(title,str(i)))
+            
+            
+    def indiv_original_img(self,**kwargs):
+        self.indiv_img(kwargs["x"],"original")
+        
+    def indiv_altered_img(self,**kwargs):
+        self.indiv_img(kwargs["x_prime"],"altered")
+        
+    def indiv_res_img(self,**kwargs):
+        self.indiv_img(kwargs["x_hat"],"res")
         
     #--------- BOARD
         

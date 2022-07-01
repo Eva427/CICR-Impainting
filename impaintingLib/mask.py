@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import impaintingLib as imp
 
 from torchvision import transforms
 from PIL import Image
@@ -7,12 +8,16 @@ from os import listdir
 from os.path import isfile, join
 import random
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class Alter :
 
     def __init__(self, min_cut=15, max_cut=45, seed=0):
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
+        self.maskLoader = imp.data.getMasks()
+        self.maskIter   = iter(self.maskLoader)
     
     # Propage le masque généré sur tous les channels
     def propagate(self,imgs,masks):
@@ -59,7 +64,7 @@ class Alter :
             imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
         return imgs_low
     
-    def irregularMask(self,imgs):
+    def irregularMaskOLD(self,imgs):
     
         maskPath = "./data/masks/"
         files = [f for f in listdir(maskPath) if isfile(join(maskPath, f))]
@@ -73,6 +78,18 @@ class Alter :
                 mask = transforms.Resize((w,h))(mask)
                 masks[i] = mask
 
+        imgs_masked = self.propagate(imgs,masks)
+        return imgs_masked
+    
+    def irregularMask(self,imgs):
+    
+        try:
+            masks,_ = next(self.maskIter)
+        except StopIteration:
+            self.maskIter = iter(self.maskLoader)
+            masks,_ = next(self.maskIter)
+            
+        masks = masks[:,:1].to(device)
         imgs_masked = self.propagate(imgs,masks)
         return imgs_masked
 
