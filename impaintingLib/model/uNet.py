@@ -77,6 +77,7 @@ class UpSampleBlock(nn.Module):
         if "partial" in self.netType :
             m = self.upsample(m)
 
+        print(x.shape,x_skip.shape)
         x = torch.cat([x, x_skip], dim=1)
         # m = torch.cat([m, m_skip], dim=1)
 

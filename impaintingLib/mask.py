@@ -10,6 +10,22 @@ import random
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# Propage le masque généré sur tous les channels
+def propagate(imgs,masks):
+
+    n, c, h, w = imgs.shape     # 4
+    imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
+    for i, (img, mask) in enumerate(zip(imgs, masks)):
+        propag_img = img.clone()
+        mask_bit = (mask == 0) * 1.
+        for j,channel in enumerate(img) :
+            propag_img[j] = channel * mask_bit
+
+        #imgs_masked[i] = torch.cat((propag_img,mask),0)
+        imgs_masked[i] = propag_img
+
+    return imgs_masked
+
 class Alter :
 
     def __init__(self, min_cut=15, max_cut=45, seed=0):
@@ -18,22 +34,6 @@ class Alter :
         self.seed    = seed
         self.maskLoader = imp.data.getMasks()
         self.maskIter   = iter(self.maskLoader)
-    
-    # Propage le masque généré sur tous les channels
-    def propagate(self,imgs,masks):
-        
-        n, c, h, w = imgs.shape     # 4
-        imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
-        for i, (img, mask) in enumerate(zip(imgs, masks)):
-            propag_img = img.clone()
-            mask_bit = (mask == 0) * 1.
-            for j,channel in enumerate(img) :
-                propag_img[j] = channel * mask_bit
-                
-            #imgs_masked[i] = torch.cat((propag_img,mask),0)
-            imgs_masked[i] = propag_img
-            
-        return imgs_masked
     
     # Generate square mask
     def squareMask(self,imgs):
@@ -55,7 +55,7 @@ class Alter :
             cut_img[:, h22:h22 + h11, w22:w22 + w22] = 1
             masks[i] = cut_img
             
-        imgs_masked = self.propagate(imgs,masks)
+        imgs_masked = propagate(imgs,masks)
         return imgs_masked
     
     def downScale(self,imgs, scale_factor=2, upscale=True):
@@ -78,7 +78,7 @@ class Alter :
                 mask = transforms.Resize((w,h))(mask)
                 masks[i] = mask
 
-        imgs_masked = self.propagate(imgs,masks)
+        imgs_masked = propagate(imgs,masks)
         return imgs_masked
     
     def irregularMask(self,imgs):
@@ -90,7 +90,7 @@ class Alter :
             masks,_ = next(self.maskIter)
             
         masks = masks[:,:1].to(device)
-        imgs_masked = self.propagate(imgs,masks)
+        imgs_masked = propagate(imgs,masks)
         return imgs_masked
 
 
