@@ -32,8 +32,8 @@ class Alter :
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
-        self.maskLoader = imp.data.getMasks()
-        self.maskIter   = iter(self.maskLoader)
+        # self.maskLoader = imp.data.getMasks()
+        # self.maskIter   = iter(self.maskLoader)
     
     # Generate square mask
     def squareMask(self,imgs):

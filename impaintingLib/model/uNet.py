@@ -40,7 +40,6 @@ class DoubleConv(nn.Module):
             x = self.activtion(x)
             x = self.conv2(x)
             x = self.activtion(x)
-
         return x, m
 
 
@@ -77,7 +76,6 @@ class UpSampleBlock(nn.Module):
         if "partial" in self.netType :
             m = self.upsample(m)
 
-        print(x.shape,x_skip.shape)
         x = torch.cat([x, x_skip], dim=1)
         # m = torch.cat([m, m_skip], dim=1)
 
@@ -102,6 +100,8 @@ class UNet(nn.Module) :
         
         if "conv2d" in self.convType :
             self.last_conv = nn.Conv2d(64, 3, 1)
+        elif "gated" in self.convType :
+            self.last_conv = layer.GatedConv2dWithActivation(64,3,1)
         else : 
             # normalement dilatation=2 mais erreur ici
             self.last_conv = nn.Conv2d(64, 3, 1, dilation=1)
