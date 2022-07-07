@@ -64,6 +64,7 @@ class Alter :
             imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
         return imgs_low
     
+    # deprecated
     def irregularMaskOLD(self,imgs):
     
         maskPath = "./data/masks/"
@@ -82,6 +83,9 @@ class Alter :
         return imgs_masked
     
     def irregularMask(self,imgs):
+        
+        if self.seed != 0:
+            np.random.seed(self.seed)
     
         try:
             masks,_ = next(self.maskIter)

@@ -6,14 +6,17 @@ import torch
 sizeTrain = 12000
 sizeTest  = 1233
 
+# 2, 0 ou 1
+numWorker = 2 
+
 resize = (120, 120)
 crop   = (64 , 64 )
 
-resize = (240, 240)
-crop   = (128, 128)
+#resize = (240, 240)
+#crop   = (128, 128)
 
-resize = (360, 360)
-crop   = (192, 192)
+#resize = (360, 360)
+#crop   = (192, 192)
 
 # def downloadFaces():
 #     !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
@@ -49,7 +52,7 @@ def getFaces(batch_size=32,shuffle=True,doNormalize=True):
     return getData(path='data/lfw', 
                     batch_size=batch_size, 
                     shuffle=shuffle, 
-                    num_workers=0) # 2 normalement, test à 1 ou 0
+                    num_workers=numWorker) 
 
 def getMasks(batch_size=32,shuffle=True,num_workers=2):
     path = "data/masks"

@@ -1,0 +1,3 @@
+30,save
+
+model=unetpartialgated loss=L1,500*perceptualAE,perceptualVGG,totalvar
