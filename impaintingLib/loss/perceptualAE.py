@@ -5,14 +5,6 @@ import torch
 modelPath = "./modelSave/perceptualAE_L1.pth"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def gram_matrix(input):
-    a, b, c, d = input.size()   # a=batch size(=1)
-                                # b=number of feature maps
-                                # (c,d)=dimensions of a f. map (N=c*d)
-    features = input.view(a * b, c * d) 
-    G = torch.mm(features, features.t())  # compute the gram product
-    return G.div(a * b * c * d)
-
 def trainAE(model):
     optimizer               = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.001)
     trainloader, testloader = imp.data.getFaces(shuffle=False,doNormalize=False)
@@ -49,7 +41,6 @@ def perceptualAE(x, y):
     y_feats = model.encoder(y)
     
     loss = 0
-    #loss += mse(gram_matrix(x_feats), gram_matrix(y_feats))
     loss = mse(x_feats,y_feats)
         
     return loss

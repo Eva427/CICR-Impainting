@@ -51,6 +51,7 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
 
         for x, _ in t:
             x = imp.data.randomTransfo(x)
+            #x = imp.data.crop(x)
             x = imp.data.normalize(x)
             
             x = x.to(device)

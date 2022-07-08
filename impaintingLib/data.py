@@ -6,18 +6,6 @@ import torch
 sizeTrain = 12000
 sizeTest  = 1233
 
-# 2, 0 ou 1
-numWorker = 2 
-
-resize = (120, 120)
-crop   = (64 , 64 )
-
-#resize = (240, 240)
-#crop   = (128, 128)
-
-#resize = (360, 360)
-#crop   = (192, 192)
-
 # def downloadFaces():
 #     !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
 #     !tar zxvf lfw.tgz > /dev/null 2>&1
@@ -32,31 +20,53 @@ def addChannel(imgs):
         all_img[i] = torch.cat((img,blank_layer),0)
     return all_img
 
+def getSize(size):
+    numWorker = 2 
+    resize = (120, 120)
+    crop   = (64 , 64 )
+        
+    if "med" in size :
+        numWorker = 0
+        resize = (240, 240)
+        crop   = (128, 128)
+
+    if "high" in size :
+        numWorker = 0
+        resize = (360, 360)
+        crop   = (192, 192)
+        
+    return resize,crop,numWorker
+
 def getData(path,**kwargs):
+   
+    if not kwargs["shuffle"] :
+        torch.manual_seed(0)
+        
+    resize,crop,numWorker = getSize(kwargs["resize"])
     transformations = [
          transforms.Resize(resize), 
          transforms.CenterCrop(crop),
          transforms.ToTensor()
     ]
     
-    if not kwargs["shuffle"] :
-        torch.manual_seed(0)
-    
+    kwargs["num_workers"] = numWorker
+    kwargs.pop("resize")
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
     lengths = [sizeTrain, sizeTest]
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces(batch_size=32,shuffle=True,doNormalize=True):
+def getFaces(batch_size=32,shuffle=True,doNormalize=True,resize="low"):
     return getData(path='data/lfw', 
                     batch_size=batch_size, 
                     shuffle=shuffle, 
-                    num_workers=numWorker) 
+                    resize=resize) 
 
-def getMasks(batch_size=32,shuffle=True,num_workers=2):
+def getMasks(batch_size=32,shuffle=True,resize="low"):
     path = "data/masks"
 
+    _,crop,numWorker = getSize(resize)
     transformations = [
          transforms.Resize(crop), 
          transforms.ToTensor()
@@ -66,7 +76,7 @@ def getMasks(batch_size=32,shuffle=True,num_workers=2):
     dataset = ImageFolder(path, process)
     masks   = DataLoader(dataset, batch_size=batch_size, 
                                   shuffle=shuffle, 
-                                  num_workers=num_workers)
+                                  num_workers=numWorker)
     return masks
     
 
@@ -101,6 +111,16 @@ def zoom(img,factor=0):
     img = img.crop((left, upper, right, lower))
     img = img.resize(size)
     return img
+
+def crop(img):
+    (mu,sigma) = (40,10)
+    _,_,size,_ = img.shape
+    factor = np.random.normal(mu, sigma)
+    
+    transfo = transforms.Compose([transforms.RandomCrop(size*factor/100),
+                        transforms.Resize((size,size))])
+    
+    return transfo(img)
 
 def rotation(img):
     (mu,sigma) = (1,1)

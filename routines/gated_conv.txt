@@ -1,4 +1,4 @@
-1,test
+1,test,high,seed
 
 # model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar
 model=unetpartialgated,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar
