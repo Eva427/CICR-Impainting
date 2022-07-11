@@ -1,0 +1,10 @@
+5,retrain,save,medium
+
+model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar
+model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,500*peceptualClassifier
+model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,1000*peceptualClassifier
+model=unetpartial,subpixel loss=peceptualClassifier
+
+# model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,peceptualClassifier
+# model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,10*peceptualClassifier
+# model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,100*peceptualClassifier

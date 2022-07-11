@@ -77,13 +77,13 @@ class Visu :
         images_hat   = kwargs["x_hat"].cuda()
         
         dir_path = "runs/{}/altered".format(self.expeName)
-        if not os.path.exists(dir_path) :
-            writer  = SummaryWriter(dir_path)
-            images = images_prime[:self.gridSize]
-            images = torch.clip(images,0,1)
-            img_grid = make_grid(images)
-            writer.add_image("Altered",img_grid)
-            writer.close()
+#         if not os.path.exists(dir_path) :
+        writer  = SummaryWriter(dir_path)
+        images = images_prime[:self.gridSize]
+        images = torch.clip(images,0,1)
+        img_grid = make_grid(images)
+        writer.add_image("Altered",img_grid)
+        writer.close()
         
         writer  = SummaryWriter("runs/{}/{}".format(self.expeName,self.runName))
         images = images_hat[:self.gridSize]

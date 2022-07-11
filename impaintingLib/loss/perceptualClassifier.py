@@ -14,6 +14,7 @@ def transformer(resize, totensor, normalize, centercrop, imsize):
     if totensor:
         options.append(transforms.ToTensor())
     if normalize:
+        options.append(transforms.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],std=[1/0.229, 1/0.224, 1/0.225]))
         options.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
     transform = transforms.Compose(options)
     return transform
@@ -27,9 +28,8 @@ def getTrainedModel():
 def perceptualClassifier(x, y):
     model = getTrainedModel()
     mse = torch.nn.MSELoss()
-    x_feats = model(x)
-    y_feats = model(y)
-    # generate_label(labels_predict,size)[0]
+    x_feats = model.getFeatures(x)
+    y_feats = model.getFeatures(y)
     
     loss = 0
     loss = mse(x_feats,y_feats)

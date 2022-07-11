@@ -63,7 +63,7 @@ def getFaces(batch_size=32,shuffle=True,doNormalize=True,resize="low"):
                     shuffle=shuffle, 
                     resize=resize) 
 
-def getMasks(batch_size=32,shuffle=True,resize="low"):
+def getMasks(batch_size=32,seed=0,resize="low"):
     path = "data/masks"
 
     _,crop,numWorker = getSize(resize)
@@ -72,10 +72,15 @@ def getMasks(batch_size=32,shuffle=True,resize="low"):
          transforms.ToTensor()
         ]
 
+    g = torch.Generator()
+    if seed != 0 : 
+        g.manual_seed(seed)
+    
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
     masks   = DataLoader(dataset, batch_size=batch_size, 
-                                  shuffle=shuffle, 
+                                  shuffle=True, 
+                                  generator=g,
                                   num_workers=numWorker)
     return masks
     

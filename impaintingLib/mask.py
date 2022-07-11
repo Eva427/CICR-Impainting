@@ -32,7 +32,8 @@ class Alter :
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
-        self.maskLoader = imp.data.getMasks(resize=resize)
+        
+        self.maskLoader = imp.data.getMasks(resize=resize,seed=seed)
         self.maskIter   = iter(self.maskLoader)
     
     # Generate square mask
@@ -84,9 +85,6 @@ class Alter :
     
     def irregularMask(self,imgs):
         
-        if self.seed != 0:
-            np.random.seed(self.seed)
-    
         try:
             masks,_ = next(self.maskIter)
         except StopIteration:
