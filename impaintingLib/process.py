@@ -93,29 +93,22 @@ def test(models, loader, alter=None, visuFuncs=None):
     with torch.no_grad():
         
         running_loss = []
-        t = tqdm(loader)
-        for x, _ in t:
-            #x = imp.data.randomTransfo(x)
-            x = imp.data.normalize(x)
-            
-            x = x.to(device)
+        x, _ = next(iter(loader))
+        
+        #x = imp.data.randomTransfo(x)
+        x = imp.data.normalize(x)
 
-            if alter :
-                x_prime = alter(x)
+        x = x.to(device)
 
-            else : 
-                x_prime = x
+        if alter :
+            x_prime = alter(x)
 
-            x_hat = x_prime.cuda()
-            for model in models:
-                x_hat = model(x_hat)
-                
-            loss = imp.loss.perceptualVGG(x,x_hat)  
-            loss += imp.loss.totalVariation(x_hat)
-            loss += torch.nn.L1Loss()(x,x_hat)
-            
-            running_loss.append(loss.item())
-            t.set_description(f'testing loss: {mean(running_loss)}')
+        else : 
+            x_prime = x
+
+        x_hat = x_prime.cuda()
+        for model in models:
+            x_hat = model(x_hat)
             
         x       = imp.data.inv_normalize(x)
         x_prime = imp.data.inv_normalize(x_prime)

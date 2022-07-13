@@ -20,29 +20,28 @@ def addChannel(imgs):
         all_img[i] = torch.cat((img,blank_layer),0)
     return all_img
 
-def getSize(size):
+def getSize(factor=1):
     numWorker = 2 
-    resize = (120, 120)
-    crop   = (64 , 64 )
+    wr,hr = resize = (120, 120)
+    wc,hc = crop = (64 , 64 )
+    batchSize = 32
         
-    if "med" in size :
+    if factor > 1 :
         numWorker = 0
-        resize = (240, 240)
-        crop   = (128, 128)
-
-    if "high" in size :
-        numWorker = 0
-        resize = (360, 360)
-        crop   = (192, 192)
+        resize = (wr*factor,hr*factor)
+        crop   = (wc*factor,hc*factor)
         
-    return resize,crop,numWorker
+    if factor > 3 :
+        batchSize = 16
+        
+    return resize,crop,numWorker,batchSize
 
 def getData(path,**kwargs):
    
     if not kwargs["shuffle"] :
         torch.manual_seed(0)
         
-    resize,crop,numWorker = getSize(kwargs["resize"])
+    resize,crop,numWorker,batchSize = getSize(kwargs["resize"])
     transformations = [
          transforms.Resize(resize), 
          transforms.CenterCrop(crop),
@@ -50,35 +49,37 @@ def getData(path,**kwargs):
     ]
     
     kwargs["num_workers"] = numWorker
+    kwargs["batch_size"]  = batchSize
     kwargs.pop("resize")
+    
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
     lengths = [sizeTrain, sizeTest]
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces(batch_size=32,shuffle=True,doNormalize=True,resize="low"):
+def getFaces(shuffle=True,doNormalize=True,resize=1):
     return getData(path='data/lfw', 
-                    batch_size=batch_size, 
                     shuffle=shuffle, 
                     resize=resize) 
 
-def getMasks(batch_size=32,seed=0,resize="low"):
+def getMasks(seed=0,resize=1):
     path = "data/masks"
 
-    _,crop,numWorker = getSize(resize)
+    _,crop,numWorker,batchSize = getSize(resize)
     transformations = [
          transforms.Resize(crop), 
          transforms.ToTensor()
         ]
 
-    g = torch.Generator()
+    g = None
     if seed != 0 : 
+        g = torch.Generator()
         g.manual_seed(seed)
     
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
-    masks   = DataLoader(dataset, batch_size=batch_size, 
+    masks   = DataLoader(dataset, batch_size = batchSize,
                                   shuffle=True, 
                                   generator=g,
                                   num_workers=numWorker)

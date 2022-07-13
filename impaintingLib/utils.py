@@ -9,15 +9,16 @@ import os
 
 class Visu :
 
-    def __init__(self, expeName = "default", runName = "default", save = False):
+    def __init__(self, expeName = "default", runName = "default", save = False, gridSize = 16):
         self.runName  = runName
         self.expeName = expeName
         self.path = "./savedImages/{}/{}.png".format(expeName,runName)
         self.save = save
         
+        self.gridSize = gridSize
         self.count    = 0
-        self.gridSize = 16
         self.figSize  = (80,60)
+        self.figSize  = (40,40)
         
     #--------- PLOT and save
 

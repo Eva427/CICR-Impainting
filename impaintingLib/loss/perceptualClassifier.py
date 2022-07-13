@@ -28,6 +28,8 @@ def getTrainedModel():
 def perceptualClassifier(x, y):
     model = getTrainedModel()
     mse = torch.nn.MSELoss()
+    
+    # attends mais on a pas appelé transformer là c'est pour ça qu'on a des résultats "normaux"
     x_feats = model.getFeatures(x)
     y_feats = model.getFeatures(y)
     

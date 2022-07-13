@@ -1,4 +1,4 @@
-5,retrain,save,medium
+3,retrain,save,high
 
 model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar
 model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,500*peceptualClassifier
