@@ -13,12 +13,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Propage le masque généré sur tous les channels
 def propagate(imgs,masks):
 
-    n, c, h, w = imgs.shape     # 4
-    imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
+    n, c, h, w = imgs.shape     # c+1
+    imgs_masked = torch.empty((n, c, h, w), dtype=imgs.dtype, device=imgs.device)
     for i, (img, mask) in enumerate(zip(imgs, masks)):
         propag_img = img.clone()
         mask_bit = (mask == 0) * 1.
-        for j,channel in enumerate(img) :
+        for j,channel in enumerate(img[:3]) :
             propag_img[j] = channel * mask_bit
 
         #imgs_masked[i] = torch.cat((propag_img,mask),0)

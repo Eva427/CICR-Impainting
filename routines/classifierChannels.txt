@@ -1,0 +1,4 @@
+10,save,classify
+# 5,retrain,save,indiv,classify,medium
+
+model=unetpartialgated,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar

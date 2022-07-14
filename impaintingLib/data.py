@@ -54,6 +54,10 @@ def getData(path,**kwargs):
     
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
+    
+    sizeTest = int(len(dataset) / 10)
+    sizeTrain = len(dataset) - sizeTest
+    
     lengths = [sizeTrain, sizeTest]
     train_set, val_set = torch.utils.data.random_split(dataset, lengths)
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
@@ -85,7 +89,6 @@ def getMasks(seed=0,resize=1):
                                   num_workers=numWorker)
     return masks
     
-
 def normalize(x):
     transfo = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std =[0.229, 0.224, 0.225])
@@ -94,7 +97,7 @@ def normalize(x):
 def inv_normalize(x):
     transfo = transforms.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
                                    std=[1/0.229, 1/0.224, 1/0.225])
-    x = x[:,:3]
+    # x = x[:,:3]
     return transfo(x)
 
 # ------------- AUGMENTATION
