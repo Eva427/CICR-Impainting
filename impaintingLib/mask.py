@@ -13,12 +13,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Propage le masque généré sur tous les channels
 def propagate(imgs,masks):
 
-    n, c, h, w = imgs.shape     # 4
-    imgs_masked = torch.empty((n, 3, h, w), dtype=imgs.dtype, device=imgs.device)
+    n, c, h, w = imgs.shape     # c+1
+    imgs_masked = torch.empty((n, c, h, w), dtype=imgs.dtype, device=imgs.device)
     for i, (img, mask) in enumerate(zip(imgs, masks)):
         propag_img = img.clone()
         mask_bit = (mask == 0) * 1.
-        for j,channel in enumerate(img) :
+        for j,channel in enumerate(img[:3]) :
             propag_img[j] = channel * mask_bit
 
         #imgs_masked[i] = torch.cat((propag_img,mask),0)
@@ -28,12 +28,13 @@ def propagate(imgs,masks):
 
 class Alter :
 
-    def __init__(self, min_cut=15, max_cut=45, seed=0):
+    def __init__(self, min_cut=15, max_cut=45, seed=0, resize="low"):
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
-        # self.maskLoader = imp.data.getMasks()
-        # self.maskIter   = iter(self.maskLoader)
+        
+        self.maskLoader = imp.data.getMasks(resize=resize,seed=seed)
+        self.maskIter   = iter(self.maskLoader)
     
     # Generate square mask
     def squareMask(self,imgs):
@@ -64,6 +65,7 @@ class Alter :
             imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
         return imgs_low
     
+    # deprecated
     def irregularMaskOLD(self,imgs):
     
         maskPath = "./data/masks/"
@@ -82,7 +84,7 @@ class Alter :
         return imgs_masked
     
     def irregularMask(self,imgs):
-    
+        
         try:
             masks,_ = next(self.maskIter)
         except StopIteration:

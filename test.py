@@ -7,14 +7,25 @@ from torchvision import transforms
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 models = []
-models.append(imp.model.UNet(3, netType="partial", convType="gated")) # , 
-models.append(imp.model.SubPixelNetwork(3))
-models[0].load_state_dict(torch.load('./modelSave/gated/impainter.pth', map_location=torch.device('cpu')))
-models[1].load_state_dict(torch.load('./modelSave/gated/augmenter.pth', map_location=torch.device('cpu')))
+models.append(imp.model.UNet(22, netType="partial")) # , convType="gated"
+models[0].load_state_dict(torch.load('./modelSave/partial_22channels_highres.pth', map_location=torch.device('cpu')))
+
+#models.append(imp.model.SubPixelNetwork(3))
+#models[0].load_state_dict(torch.load('./modelSave/gated/impainter.pth', map_location=torch.device('cpu')))
+#models[1].load_state_dict(torch.load('./modelSave/gated/augmenter.pth', map_location=torch.device('cpu')))
 
 # resize = (64,64)
-resize = (192,192)
-# resize = (256,256)
+# resize = (192,192)
+resize = (256,256)
+
+def classify(x):
+    xNormalized = imp.data.normalize(x)
+    modelPath = "./modelSave/classifierUNet.pth"
+    classif = imp.model.ClassifierUNet()
+    classif.load_state_dict(torch.load(modelPath,map_location=torch.device('cpu')))
+    normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
+    classifiedImage = classif(normalized)
+    return torch.cat((xNormalized,classifiedImage),dim=1)
 
 def convertImage(input):
     image, mask = input["image"], input["mask"]
@@ -31,7 +42,8 @@ def convertImage(input):
 
     c,w,h = image.shape
     image = image.view(1,c,w,h)
-    image = imp.data.normalize(image)
+    #image = imp.data.normalize(image)
+    image = classify(image)
 
     mask  = mask[:1]
     image = imp.mask.propagate(image,mask)
@@ -49,7 +61,7 @@ def predict(image):
 
     image = imp.data.inv_normalize(image)
     image = torch.clip(image,0,1)
-    return image
+    return image[:,:3]
 
 def impaint(input):
     image_prime = convertImage(input)
