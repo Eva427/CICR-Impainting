@@ -35,10 +35,8 @@ class LossNetwork(torch.nn.Module):
                 features.append(x)
         return features
     
-
-loss_network = LossNetwork()
-
 def perceptualVGG(x, y):
+    loss_network = LossNetwork()
     mse = torch.nn.MSELoss()
     x_feats = loss_network(x)
     y_feats = loss_network(y)

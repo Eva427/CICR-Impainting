@@ -5,6 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 from torchvision import transforms
 
+import numpy as np
 import impaintingLib as imp
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,6 +46,27 @@ def model_load(models, runName):
     
     return models
 
+def npToTensor(x):
+    c,w,h = x.shape
+    x = x / c
+    x = torch.from_numpy(x).to(device)
+    x = torch.reshape(x, (c,1,w,h))
+    return x
+
+def simplifyChannels(x):
+    x = np.where(x == 3, 0, x) 
+    x = np.where(x == 4, 3, x) 
+    x = np.where(x == 5, 3, x) 
+    x = np.where(x == 6, 4, x) 
+    x = np.where(x == 7, 4, x) 
+    x = np.where(x == 8, 5, x) 
+    x = np.where(x == 9, 5, x) 
+    x = np.where(x == 10 , 6, x) 
+    x = np.where(x == 11, 7, x) 
+    x = np.where(x == 12, 7, x)  
+    x = np.where(x > 12, 0, x) 
+    return x
+
 def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None, classify=False):
     
     for epoch in range(epochs):
@@ -54,29 +76,29 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
         for x, _ in t:
             # x = imp.data.randomTransfo(x)
             x = x.to(device)
-            xNormalized = imp.data.normalize(x)
+            
+            if alter :
+                x_prime = alter(imp.data.normalize(x)) 
+            else : 
+                x_prime = imp.data.normalize(x)
             
             if classify :
                 normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
                 classifiedImage = classif(normalized)
-                # classifiedImage = transforms.Normalize((-1, -1, -1), (1/0.5, 1/0.5, 1/0.5))(classifiedImage)
-                x = torch.cat((xNormalized,classifiedImage),dim=1)
+                _,_,w,_ = x.shape
+                classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
+                classifPlain = simplifyChannels(classifPlain)
+                classifPlain = npToTensor(classifPlain)
+                classifPlain = classifPlain.float()
+                x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
             else :
-                x = xNormalized
-                
+                x_prime2 = x_prime
+
             #x = imp.data.crop(x)
-            
-            if alter :
-                x_prime = alter(x) 
-            else : 
-                x_prime = x
-          
-            x_hat = x_prime.cuda()
+            x_hat = x_prime2.cuda()
             for model in models:
                 x_hat = model(x_hat)
                 
-            x = x[:,:3]
-            x_prime = x_prime[:,:3]
             loss  = 0
             for coef,criterion in criterions :
                 loss += criterion(x_hat, x)*coef
@@ -92,7 +114,7 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
         
-        x       = imp.data.inv_normalize(x)
+        # x       = imp.data.inv_normalize(x)
         x_prime = imp.data.inv_normalize(x_prime)
         x_hat   = imp.data.inv_normalize(x_hat)
             
@@ -107,31 +129,29 @@ def test(models, loader, alter=None, visuFuncs=None, classify=False):
         running_loss = []
         x, _ = next(iter(loader))
         x = x.to(device)
-        
-        #x = imp.data.randomTransfo(x)
-        xNormalized = imp.data.normalize(x)
-        
+
+        if alter :
+            x_prime = alter(imp.data.normalize(x)) 
+        else : 
+            x_prime = imp.data.normalize(x)
+
         if classify :
             normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
             classifiedImage = classif(normalized)
-            # classifiedImage = transforms.Normalize((-1, -1, -1), (1/0.5, 1/0.5, 1/0.5))(classifiedImage)
-            x = torch.cat((xNormalized,classifiedImage),dim=1)
+            _,_,w,_ = x.shape
+            classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
+            classifPlain = simplifyChannels(classifPlain)
+            classifPlain = npToTensor(classifPlain)
+            classifPlain = classifPlain.float()
+            x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
         else :
-            x = xNormalized
+            x_prime2 = x_prime
 
-        if alter :
-            x_prime = alter(x)
-        else : 
-            x_prime = x
-
-        x_hat = x_prime.cuda()
+        x_hat = x_prime2.cuda()
         for model in models:
             x_hat = model(x_hat)
-            
-        x = x[:,:3]
-        x_prime = x_prime[:,:3]
         
-        x       = imp.data.inv_normalize(x)
+        # x       = imp.data.inv_normalize(x)
         x_prime = imp.data.inv_normalize(x_prime)
         x_hat   = imp.data.inv_normalize(x_hat)
     

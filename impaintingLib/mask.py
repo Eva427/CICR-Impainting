@@ -28,12 +28,13 @@ def propagate(imgs,masks):
 
 class Alter :
 
-    def __init__(self, min_cut=15, max_cut=45, seed=0, resize="low"):
+    def __init__(self, min_cut=15, max_cut=45, seed=0, resize="low", test=False):
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
+        self.test    = test
         
-        self.maskLoader = imp.data.getMasks(resize=resize,seed=seed)
+        self.maskLoader = imp.data.getMasks(resize=resize,seed=seed,test=test)
         self.maskIter   = iter(self.maskLoader)
     
     # Generate square mask

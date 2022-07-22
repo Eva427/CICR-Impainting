@@ -59,7 +59,10 @@ def getData(path,**kwargs):
     sizeTrain = len(dataset) - sizeTest
     
     lengths = [sizeTrain, sizeTest]
-    train_set, val_set = torch.utils.data.random_split(dataset, lengths)
+    gen = torch.Generator()
+    gen.manual_seed(0)
+    train_set, val_set = torch.utils.data.random_split(dataset, lengths, generator=gen)
+    
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
 def getFaces(shuffle=True,doNormalize=True,resize=1):
@@ -67,8 +70,12 @@ def getFaces(shuffle=True,doNormalize=True,resize=1):
                     shuffle=shuffle, 
                     resize=resize) 
 
-def getMasks(seed=0,resize=1):
-    path = "data/masks"
+def getMasks(seed=0,resize=1,test=False):
+    
+    if test:
+        path = "data/test_masks"
+    else : 
+        path = "data/masks"
 
     _,crop,numWorker,batchSize = getSize(resize)
     transformations = [
