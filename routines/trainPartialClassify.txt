@@ -1,5 +1,5 @@
-1,test,indiv,classify,xl
+1,save,indiv,classify,xl
 # 14,save,indiv,classify,xl
 # 5,retrain,save,indiv,classify,medium
 
-model=unetpartial loss=L1,500*perceptualAE,perceptualVGG,totalvar
+model=unetpartial loss=perceptualVGG,totalvar

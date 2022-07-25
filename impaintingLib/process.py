@@ -48,7 +48,7 @@ def model_load(models, runName):
 
 def npToTensor(x):
     c,w,h = x.shape
-    x = x / c
+    x = x / 8
     x = torch.from_numpy(x).to(device)
     x = torch.reshape(x, (c,1,w,h))
     return x
@@ -78,7 +78,9 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
             x = x.to(device)
             
             if alter :
-                x_prime = alter(imp.data.normalize(x)) 
+                x_preprime = transforms.Resize((64, 64))(x)
+                x_prime = alter(imp.data.normalize(x_preprime)) 
+                # x_prime = alter(imp.data.normalize(x)) 
             else : 
                 x_prime = imp.data.normalize(x)
             
@@ -90,6 +92,15 @@ def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs
                 classifPlain = simplifyChannels(classifPlain)
                 classifPlain = npToTensor(classifPlain)
                 classifPlain = classifPlain.float()
+                
+                classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
+                x = transforms.Resize((64, 64))(x)
+                
+                classifDisplay = imp.loss.generate_label(classifiedImage,w)
+                classifDisplay = classifDisplay.float()
+                classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
+                classifPlain = classifPlain.to(device)
+                
                 x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
             else :
                 x_prime2 = x_prime
@@ -131,7 +142,9 @@ def test(models, loader, alter=None, visuFuncs=None, classify=False):
         x = x.to(device)
 
         if alter :
-            x_prime = alter(imp.data.normalize(x)) 
+            x_preprime = transforms.Resize((64, 64))(x)
+            x_prime = alter(imp.data.normalize(x_preprime)) 
+            # x_prime = alter(imp.data.normalize(x)) 
         else : 
             x_prime = imp.data.normalize(x)
 
@@ -143,6 +156,18 @@ def test(models, loader, alter=None, visuFuncs=None, classify=False):
             classifPlain = simplifyChannels(classifPlain)
             classifPlain = npToTensor(classifPlain)
             classifPlain = classifPlain.float()
+            
+            plot = imp.utils.Visu(gridSize=8).plot_img
+            # plot(classifPlain)
+            classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
+            x = transforms.Resize((64, 64))(x)
+            
+            classifDisplay = imp.loss.generate_label(classifiedImage,w)
+            classifDisplay = classifDisplay.float()
+            classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
+            classifPlain = classifPlain.to(device)
+            plot(classifPlain)
+
             x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
         else :
             x_prime2 = x_prime
