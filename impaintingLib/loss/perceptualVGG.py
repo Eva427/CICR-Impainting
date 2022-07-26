@@ -35,17 +35,30 @@ class LossNetwork(torch.nn.Module):
                 features.append(x)
         return features
     
+loss_network = LossNetwork()
+    
 def perceptualVGG(x, y):
-    loss_network = LossNetwork()
-    mse = torch.nn.MSELoss()
-    x_feats = loss_network(x)
-    y_feats = loss_network(y)
+    
+    #mse = torch.nn.MSELoss()
+    #_feats = loss_network(x[:,:3])
+    #_feats = loss_network(y[:,:3])
 
     #content loss:
-    loss = mse(x_feats[2], y_feats[2].detach())
+    #oss = mse(x_feats[2], y_feats[2].detach())
     
+    #style loss:
+    #for feats, target_feats in zip(x_feats, y_feats):
+    #   loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
+        
+    #return loss
+
+    mse = torch.nn.MSELoss()
+    x_feats = loss_network(x)
+    with torch.no_grad():
+        y_feats = loss_network(y)
+    #content loss:
+    loss = mse(x_feats[2], y_feats[2].detach())
     #style loss:
     for feats, target_feats in zip(x_feats, y_feats):
         loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
-        
     return loss

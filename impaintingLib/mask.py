@@ -28,7 +28,7 @@ def propagate(imgs,masks):
 
 class Alter :
 
-    def __init__(self, min_cut=15, max_cut=45, seed=0, resize="low", test=False):
+    def __init__(self, min_cut=15, max_cut=45, seed=0, resize=1, test=False):
         self.min_cut = min_cut
         self.max_cut = max_cut
         self.seed    = seed
@@ -44,11 +44,11 @@ class Alter :
             np.random.seed(self.seed)
         
         n, c, h, w = imgs.shape
-        w1 = np.random.randint(self.min_cut, self.max_cut, n)
-        h1 = np.random.randint(self.min_cut, self.max_cut, n)
+        w1 = np.random.randint(0, w, n)
+        h1 = np.random.randint(0, w, n)
         
-        w2 = np.random.randint(self.min_cut, self.max_cut, n)
-        h2 = np.random.randint(self.min_cut, self.max_cut, n)
+        w2 = np.random.randint(0, w, n)
+        h2 = np.random.randint(0, w, n)
         
         masks = torch.empty((n, 1, h, w), dtype=imgs.dtype, device=imgs.device)
         for i, (img, w11, h11, w22, h22) in enumerate(zip(imgs, w1, h1, w2, h2)):

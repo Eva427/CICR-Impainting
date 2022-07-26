@@ -54,18 +54,17 @@ def npToTensor(x):
     return x
 
 def simplifyChannels(x):
-    x = np.where(x == 3, 0, x) 
-    x = np.where(x == 4, 3, x) 
-    x = np.where(x == 5, 3, x) 
-    x = np.where(x == 6, 4, x) 
-    x = np.where(x == 7, 4, x) 
-    x = np.where(x == 8, 5, x) 
-    x = np.where(x == 9, 5, x) 
-    x = np.where(x == 10 , 6, x) 
-    x = np.where(x == 11, 7, x) 
-    x = np.where(x == 12, 7, x)  
-    x = np.where(x > 12, 0, x) 
-    return x
+    x = x.argmax(1)
+    x[x==5] = 4
+    x[x==6] = 5
+    x[x==7] = 5
+    x[x==8] = 6
+    x[x==9] = 6
+    x[x==10] = 7
+    x[x==11] = 8
+    x[x==12] = 8
+    x[x>12] = 0
+    return (x/9).unsqueeze(1) + 0.1
 
 def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None, classify=False):
     

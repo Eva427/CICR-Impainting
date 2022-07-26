@@ -24,6 +24,7 @@ class Visu :
 
     def plot_img(self,images,**kwargs):
         self.count += 1
+        images = images[:,:3]
         images = torch.clip(images[:self.gridSize],0,1)
         img_grid = make_grid(images)
         plt.figure(figsize=self.figSize)
