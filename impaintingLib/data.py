@@ -6,12 +6,6 @@ import torch
 sizeTrain = 12000
 sizeTest  = 1233
 
-resize = (120, 120)
-crop   = (64 , 64 )
-
-resize = (240, 240)
-crop   = (128, 128)
-
 # def downloadFaces():
 #     !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
 #     !tar zxvf lfw.tgz > /dev/null 2>&1
@@ -26,44 +20,82 @@ def addChannel(imgs):
         all_img[i] = torch.cat((img,blank_layer),0)
     return all_img
 
+def getSize(factor=1):
+    numWorker = 2 
+    wr,hr = resize = (120, 120)
+    wc,hc = crop = (64 , 64 )
+    batchSize = 32
+        
+    if factor > 1 :
+        numWorker = 0
+        resize = (wr*factor,hr*factor)
+        crop   = (wc*factor,hc*factor)
+        
+    if factor > 3 :
+        batchSize = 16
+        
+    return resize,crop,numWorker,batchSize
+
 def getData(path,**kwargs):
+   
+    if not kwargs["shuffle"] :
+        torch.manual_seed(0)
+        
+    resize,crop,numWorker,batchSize = getSize(kwargs["resize"])
     transformations = [
          transforms.Resize(resize), 
          transforms.CenterCrop(crop),
          transforms.ToTensor()
     ]
     
-    if not kwargs["shuffle"] :
-        torch.manual_seed(0)
+    kwargs["num_workers"] = numWorker
+    kwargs["batch_size"]  = batchSize
+    kwargs.pop("resize")
     
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
+    
+    sizeTest = int(len(dataset) / 10)
+    sizeTrain = len(dataset) - sizeTest
+    
     lengths = [sizeTrain, sizeTest]
-    train_set, val_set = torch.utils.data.random_split(dataset, lengths)
+    gen = torch.Generator()
+    gen.manual_seed(0)
+    train_set, val_set = torch.utils.data.random_split(dataset, lengths, generator=gen)
+    
     return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
 
-def getFaces(batch_size=32,shuffle=True,doNormalize=True):
+def getFaces(shuffle=True,doNormalize=True,resize=1):
     return getData(path='data/lfw', 
-                    batch_size=batch_size, 
                     shuffle=shuffle, 
-                    num_workers=2) # 2 normalement, test à -1/0
+                    resize=resize) 
 
-def getMasks(batch_size=32,shuffle=True,num_workers=2):
-    path = "data/masks"
+def getMasks(seed=0,resize=1,test=False):
+    
+    if test:
+        path = "data/test_masks"
+    else : 
+        path = "data/masks"
 
+    _,crop,numWorker,batchSize = getSize(resize)
     transformations = [
          transforms.Resize(crop), 
          transforms.ToTensor()
         ]
 
+    g = None
+    if seed != 0 : 
+        g = torch.Generator()
+        g.manual_seed(seed)
+    
     process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
-    masks   = DataLoader(dataset, batch_size=batch_size, 
-                                  shuffle=shuffle, 
-                                  num_workers=num_workers)
+    masks   = DataLoader(dataset, batch_size = batchSize,
+                                  shuffle=True, 
+                                  generator=g,
+                                  num_workers=numWorker)
     return masks
     
-
 def normalize(x):
     transfo = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std =[0.229, 0.224, 0.225])
@@ -95,6 +127,16 @@ def zoom(img,factor=0):
     img = img.crop((left, upper, right, lower))
     img = img.resize(size)
     return img
+
+def crop(img):
+    (mu,sigma) = (40,10)
+    _,_,size,_ = img.shape
+    factor = np.random.normal(mu, sigma)
+    
+    transfo = transforms.Compose([transforms.RandomCrop(size*factor/100),
+                        transforms.Resize((size,size))])
+    
+    return transfo(img)
 
 def rotation(img):
     (mu,sigma) = (1,1)

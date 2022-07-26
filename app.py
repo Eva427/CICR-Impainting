@@ -10,12 +10,12 @@ from PIL import Image
 #models[0].load_state_dict(torch.load('./modelSave/gated/impainter.pth', map_location=torch.device('cpu')))
 #models[1].load_state_dict(torch.load('./modelSave/gated/augmenter.pth', map_location=torch.device('cpu')))
 
-factorResize = 4
+factorResize = 2
 resize = (64*factorResize, 64*factorResize)
 
 # Impainter
 impainter = imp.model.UNet(4, netType="partial") # , convType="gated"
-impainter_weight_path = './modelSave/david/partial4channel_high.pth'
+impainter_weight_path = './modelSave/david/partial4channel_low.pth'
 impainter.load_state_dict(torch.load(impainter_weight_path, map_location=torch.device('cpu')))
 
 # Classifier
@@ -34,8 +34,7 @@ def convertImage(image):
     min_dim = min(w,h)
     image = transforms.CenterCrop((min_dim,min_dim))(image)
     image = transforms.Resize(resize)(image)
-    c,w,h = image.shape
-    image = image.view(1,c,w,h)
+    image = image.view(1,c,resize[0],resize[0])
     return image
 
 def simplifyChannels(x):
@@ -50,8 +49,7 @@ def simplifyChannels(x):
     x = np.where(x == 11, 7, x) 
     x = np.where(x == 12, 7, x)  
     x = np.where(x > 12, 0, x) 
-    # return (x / 9) + 0.1
-    return x
+    return x / 10
 
 def npToTensor(x):
     c,w,h = x.shape
@@ -62,22 +60,18 @@ def npToTensor(x):
 def segment(input):
     image = input["image"]
     image = convertImage(image)
-    _,_,w,_ = image.shape
+    image = torch.nn.functional.interpolate(image, scale_factor=4)
     normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(image)
     classifiedImage = classif(normalized)
+    classifiedImage = torch.nn.functional.avg_pool2d(classifiedImage, 4)
+    _,_,w,_ = classifiedImage.shape
     classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
     classifPlain = simplifyChannels(classifPlain)
     classifPlain = npToTensor(classifPlain)
-
-    # le = int(len(classifPlain[0][0])/2)
-    # for i in classifPlain[0][0][le-2:le]:
-    #     print(i)
-
     return transforms.ToPILImage()(classifPlain[0])
 
 def predict(image):
     image = impainter(image)
-    image = imp.data.inv_normalize(image)
     image = torch.clip(image,0,1)
     return image[:,:3]
 
@@ -86,27 +80,16 @@ def impaint(original,segment):
     image   = convertImage(image)
     mask    = convertImage(mask)
     segment = convertImage(segment)
+    mask  = mask[:,:1]
 
     segment = segment * 10
     segment = torch.round(segment)
-
     # le = int(len(segment[0][0])/2)  
     # for i in segment[0][0][le-2:le]:
     #     print(i)
-    
-    segment = (segment / 9) + 0.1
+    segment = (segment / 9) + 0.11
+    x_prime = imp.mask.propagate(image,mask)
 
-    _,_,w,_ = image.shape
-    normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(image)
-    classifiedImage = classif(normalized)
-    classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
-    classifPlain = simplifyChannels(classifPlain)
-    classifPlain = npToTensor(classifPlain)
-    segment = (classifPlain / 9) + 0.1
-
-    mask  = mask[:,:1]
-    xNormalized = imp.data.normalize(image)
-    x_prime = imp.mask.propagate(xNormalized,mask)
     x_prime2 = torch.cat((x_prime,segment),dim=1)
     image_hat = predict(x_prime2)
     image_hat = transforms.ToPILImage()(image_hat[0])
