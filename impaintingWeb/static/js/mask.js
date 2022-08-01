@@ -2,23 +2,9 @@ canvasMask = document.getElementById('canvasMask')
 contextMask = canvasMask.getContext("2d");
 var canvasBackMask = document.createElement("canvas");
 canvasBackMask.ctx = canvasBackMask.getContext("2d");
-
+var canvasFrontMask = document.createElement("canvas");
+canvasFrontMask.ctx = canvasFrontMask.getContext("2d");
 var imgMask = new Image();
-imgMask.onload = function() {
-
-    var maxSizeMask = Math.max(imgMask.width, imgMask.height);
-    var divisibleMask = Math.round(maxSizeMask / 512);
-    imgMask.width = imgMask.width / divisibleMask;
-    imgMask.height = imgMask.height / divisibleMask;
-
-    canvasBackMask.width = imgMask.width;
-    canvasBackMask.height = imgMask.height;
-    canvasBackMask.ctx.drawImage(imgMask, 0, 0, imgMask.width, imgMask.height);
-    canvasMask.width = canvasBackMask.width;
-    canvasMask.height = canvasBackMask.height;
-    contextMask.drawImage(canvasBackMask, 0, 0, imgMask.width, imgMask.height);
-};
-imgMask.src = './static/image/input.jpg';
 
 $('#canvasMask').mousedown(function(e) {
     paintMask = true;
@@ -72,23 +58,26 @@ function clearCanvasMask() {
 }
 
 function redrawMask() {
-    contextMask.save();
-    contextMask.lineJoin = "round";
-    contextMask.clearRect(0, 0, contextMask.canvas.width, contextMask.canvas.height); // Clears the canvasMask
-    contextMask.strokeStyle = curColorMask;
-    contextMask.drawImage(canvasBackMask, 0, 0);
+    canvasFrontMask.ctx.save();
+    canvasFrontMask.ctx.lineJoin = "round";
+    canvasFrontMask.ctx.clearRect(0, 0, canvasFrontMask.ctx.canvas.width, canvasFrontMask.ctx.canvas.height); // Clears the canvasMask
+    canvasFrontMask.ctx.strokeStyle = curColorMask;
+    
     for (var i = 0; i < clickXMask.length; i++) {
-        contextMask.beginPath();
+        canvasFrontMask.ctx.beginPath();
         if (clickDragMask[i] && i) {
-            contextMask.moveTo(clickXMask[i - 1], clickYMask[i - 1]);
+            canvasFrontMask.ctx.moveTo(clickXMask[i - 1], clickYMask[i - 1]);
         } else {
-            contextMask.moveTo(clickXMask[i] - 1, clickYMask[i]);
+            canvasFrontMask.ctx.moveTo(clickXMask[i] - 1, clickYMask[i]);
         }
-        contextMask.lineTo(clickXMask[i], clickYMask[i]);
-        contextMask.closePath();
-        contextMask.lineWidth = clickSizeMask[i];
-        contextMask.stroke();
+        canvasFrontMask.ctx.lineTo(clickXMask[i], clickYMask[i]);
+        canvasFrontMask.ctx.closePath();
+        canvasFrontMask.ctx.lineWidth = clickSizeMask[i];
+        canvasFrontMask.ctx.stroke();
     }
+
+    contextMask.drawImage(canvasBackMask, 0, 0);
+    contextMask.drawImage(canvasFrontMask, 0, 0);
     contextMask.restore();
 }
 
@@ -110,3 +99,4 @@ $('#undoMask').mousedown(function(e) {
         undoClickMask()
     }
 });
+

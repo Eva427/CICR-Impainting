@@ -34,8 +34,8 @@ class Alter :
         self.seed    = seed
         self.test    = test
         
-        self.maskLoader = imp.data.getMasks(resize=resize,seed=seed,test=test)
-        self.maskIter   = iter(self.maskLoader)
+        # self.maskLoader = imp.data.getMasks(resize=resize,seed=seed,test=test)
+        # self.maskIter   = iter(self.maskLoader)
     
     # Generate square mask
     def squareMask(self,imgs):
