@@ -19,10 +19,20 @@
 <body>
     <div class="container text-center">
         <div class="row">
+
             <div class="col">
-                <img src="./static/image/input.jpg" width="300px">
                 <div>
-                    <button class="btn btn-success" id="predict" type="button">Predict</button>
+                    <button class="btn btn-danger" id="clearMask" type="button">Clear</button>
+                    <button class="btn btn-warning" id="undoMask" type="button">Undo</button>
+                    <input type="range" id="sizeMask" name="sizeMask" min="1" max="20">
+                    <label for="sizeMask">Brush Size</label>
+                </div>
+                <div>
+                    <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
+                </div>
+
+                <div>
+                    <button class="btn btn-success" id="segment" type="button">Load Segmentation</button>
                 </div>
             </div>
 
@@ -51,7 +61,7 @@
                     <canvas id="canvas" width="256px" height="256px" style="border:1px solid blue"></canvas>
                 </div>
                 <div>
-                    <button class="btn btn-success" id="segment" type="button">Load Segmentation</button>
+                    <button class="btn btn-success" id="predict" type="button">Predict</button>
                 </div>
             </div>
 
@@ -61,7 +71,8 @@
         </div>
     </div>
     <script type="text/javascript" src="./static/js/segmentation.js"></script>
-
+    <script type="text/javascript" src="./static/js/mask.js"></script>
+    <script type="text/javascript" src="./static/js/interaction.js"></script>
 </body>
 
 </html>

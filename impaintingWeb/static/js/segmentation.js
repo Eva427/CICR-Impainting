@@ -2,15 +2,21 @@ canvas = document.getElementById('canvas')
 context = canvas.getContext("2d");
 var canvasBack = document.createElement("canvas");
 canvasBack.ctx = canvasBack.getContext("2d");
+
 var img = new Image();
 img.onload = function() {
+
+    var maxSize = Math.max(img.width, img.height);
+    var divisible = Math.round(maxSize / 512);
+    img.width = img.width / divisible;
+    img.height = img.height / divisible;
+
     canvasBack.width = img.width;
     canvasBack.height = img.height;
-    canvasBack.ctx.drawImage(img, 0, 0);
+    canvasBack.ctx.drawImage(img, 0, 0, img.width, img.height);
     canvas.width = canvasBack.width;
     canvas.height = canvasBack.height;
-    console.log(canvasBackMask);
-    context.drawImage(canvasBack, 0, 0);
+    context.drawImage(canvasBack, 0, 0, img.width, img.height);
 };
 img.src = './static/image/mask.jpg';
 
