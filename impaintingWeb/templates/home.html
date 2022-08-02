@@ -29,10 +29,13 @@
                 </div>
                 <div>
                     <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
+                    <input type="file"
+                        id="inputFile" name="inputFile"
+                        accept="image/png, image/jpeg">
                 </div>
 
                 <div>
-                    <button class="btn btn-success" id="segment" type="button">Load Segmentation</button>
+                    <img id="tempImg">
                 </div>
             </div>
 
@@ -61,12 +64,12 @@
                     <canvas id="canvas" width="256px" height="256px" style="border:1px solid blue"></canvas>
                 </div>
                 <div>
-                    <button class="btn btn-success" id="predict" type="button">Predict</button>
                 </div>
             </div>
 
             <div class="col">
-                <img src="./static/image/input.jpg" width="300px">
+                <img id="predictImg" width="300px">
+                <button class="btn btn-success" id="predict" type="button">Predict</button>
             </div>
         </div>
     </div>
