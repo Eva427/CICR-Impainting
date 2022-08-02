@@ -5,9 +5,9 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image, ImageChops
 
-factorResize = 1
-scale_factor = 4
-enhance = False
+factorResize = 2
+scale_factor = 2
+enhance = True
 
 class Obj : 
     "temporaire"
@@ -15,7 +15,7 @@ o = Obj()
 
 # Impainter
 impainter = imp.model.UNet(4, netType="partial")
-impainter_weight_path = './modelSave/02_08/partial4channels_low'
+impainter_weight_path = './modelSave/02_08/partial4channels_mid'
 # impainter_weight_path = "./modelSave/david/partial4channel_low.pth"
 impainter.load_state_dict(torch.load(impainter_weight_path, map_location=torch.device('cpu')))
 impainter.eval()
@@ -115,7 +115,7 @@ def impaint(original,segment):
     # differences = np.where(equality == False)
     # print(differences[0],differences[0][0])
 
-    segment = segment / 25
+    segment = (segment / 25) - 1
     segment = npToTensor(segment)
     segment = torch.round(segment)
     segment = (segment/9) + 0.1
