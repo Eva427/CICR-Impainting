@@ -7,7 +7,7 @@ from PIL import Image, ImageChops
 
 factorResize = 2
 scale_factor = 2
-enhance = True
+enhance = False
 
 class Obj : 
     "temporaire"

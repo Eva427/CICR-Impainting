@@ -21,17 +21,15 @@
         <div class="row">
 
             <div class="col">
-                <div>
+                <div class="reglageCommun">
                     <button class="btn btn-danger" id="clearMask" type="button">Clear</button>
                     <button class="btn btn-warning" id="undoMask" type="button">Undo</button>
                     <input type="range" id="sizeMask" name="sizeMask" min="1" max="20">
-                    <label for="sizeMask">Brush Size</label>
+                    <!-- <label for="sizeMask">Brush Size</label> -->
                 </div>
                 <div>
                     <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
-                    <input type="file"
-                        id="inputFile" name="inputFile"
-                        accept="image/png, image/jpeg">
+                    <input type="file" id="inputFile" name="inputFile" accept="image/png, image/jpeg">
                 </div>
 
                 <div>
@@ -40,11 +38,11 @@
             </div>
 
             <div class="col">
-                <div>
+                <div class="reglageCommun">
                     <button class="btn btn-danger" id="clear" type="button">Clear</button>
                     <button class="btn btn-warning" id="undo" type="button">Undo</button>
                     <input type="range" id="size" name="size" min="1" max="20">
-                    <label for="size">Brush Size</label>
+                    <!-- <label for="size">Brush Size</label> -->
                 </div>
                 <div id="brushColor">
                     <div>
@@ -70,6 +68,14 @@
             <div class="col">
                 <img id="predictImg" width="300px">
                 <button class="btn btn-success" id="predict" type="button">Predict</button>
+                <div id="enhanceContainer">
+                    Enhance
+                    <label class="switch">
+                        <input type="checkbox" id="enhance">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <img src="./static/image/loading.gif" alt="loading" width="80px" id="loading" />
             </div>
         </div>
     </div>

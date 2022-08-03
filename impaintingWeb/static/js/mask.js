@@ -62,7 +62,7 @@ function redrawMask() {
     canvasFrontMask.ctx.lineJoin = "round";
     canvasFrontMask.ctx.clearRect(0, 0, canvasFrontMask.ctx.canvas.width, canvasFrontMask.ctx.canvas.height); // Clears the canvasMask
     canvasFrontMask.ctx.strokeStyle = curColorMask;
-    
+
     for (var i = 0; i < clickXMask.length; i++) {
         canvasFrontMask.ctx.beginPath();
         if (clickDragMask[i] && i) {
@@ -78,7 +78,7 @@ function redrawMask() {
 
     contextMask.drawImage(canvasBackMask, 0, 0);
     contextMask.drawImage(canvasFrontMask, 0, 0);
-    contextMask.restore();
+    canvasFrontMask.ctx.restore();
 }
 
 $('#clearMask').mousedown(function(e) {
@@ -99,4 +99,3 @@ $('#undoMask').mousedown(function(e) {
         undoClickMask()
     }
 });
-

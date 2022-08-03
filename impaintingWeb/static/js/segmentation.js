@@ -1,16 +1,18 @@
 canvas = document.getElementById('canvas')
 context = canvas.getContext("2d");
+
 var canvasBack = document.createElement("canvas");
 canvasBack.ctx = canvasBack.getContext("2d");
-var img = new Image();
+var canvasMiddle = document.createElement("canvas");
+canvasMiddle.ctx = canvasMiddle.getContext("2d");
+var canvasFront = document.createElement("canvas");
+canvasFront.ctx = canvasFront.getContext("2d");
 
+var imgBack = new Image();
+var imgMiddle = new Image();
 
 $('#canvas').mousedown(function(e) {
-    var mouseX = e.pageX - this.offsetLeft;
-    var mouseY = e.pageY - this.offsetTop;
-
     paint = true;
-
     addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
     redraw();
 });
@@ -38,7 +40,6 @@ var paint;
 var curColor = "#191919";
 var curSize = 10;
 
-
 function addClick(x, y, dragging) {
     clickX.push(x);
     clickY.push(y);
@@ -65,25 +66,29 @@ function clearCanvas() {
     redraw();
 }
 
-function redraw() {
-    context.save();
-    context.lineJoin = "round";
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
-    context.drawImage(canvasBack, 0, 0);
+function redraw(calque = true) {
+    canvasFront.ctx.lineJoin = "round";
+    canvasFront.ctx.clearRect(0, 0, canvasFront.ctx.canvas.width, canvasFront.ctx.canvas.height); // Clears the canvas
     for (var i = 0; i < clickX.length; i++) {
-        context.beginPath();
+        canvasFront.ctx.beginPath();
         if (clickDrag[i] && i) {
-            context.moveTo(clickX[i - 1], clickY[i - 1]);
+            canvasFront.ctx.moveTo(clickX[i - 1], clickY[i - 1]);
         } else {
-            context.moveTo(clickX[i] - 1, clickY[i]);
+            canvasFront.ctx.moveTo(clickX[i] - 1, clickY[i]);
         }
-        context.lineTo(clickX[i], clickY[i]);
-        context.closePath();
-        context.strokeStyle = clickColor[i];
-        context.lineWidth = clickSize[i];
-        context.stroke();
+        canvasFront.ctx.lineTo(clickX[i], clickY[i]);
+        canvasFront.ctx.closePath();
+        canvasFront.ctx.strokeStyle = clickColor[i];
+        canvasFront.ctx.lineWidth = clickSize[i];
+        canvasFront.ctx.stroke();
     }
-    context.restore();
+    context.drawImage(canvasBack, 0, 0);
+    context.drawImage(canvasFront, 0, 0);
+    if (calque) {
+        context.globalAlpha = 0.2;
+        context.drawImage(canvasMiddle, 0, 0);
+        context.globalAlpha = 1;
+    }
 }
 
 $('#chooseColorBG').mousedown(function(e) {

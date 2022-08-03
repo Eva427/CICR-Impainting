@@ -13,13 +13,12 @@ impBP = Blueprint('imp', __name__, template_folder='templates', static_folder='s
 
 # ---------------
 
-factorResize = 1
-scale_factor = 4
-enhance = False
+factorResize = 2
+scale_factor = 2
 
 # Impainter
 impainter = imp.model.UNet(4, netType="partial")
-impainter_weight_path = './modelSave/02_08/partial4channels_low'
+impainter_weight_path = './modelSave/02_08/partial4channels_mid'
 impainter.load_state_dict(torch.load(impainter_weight_path, map_location=torch.device('cpu')))
 impainter.eval()
 
@@ -30,7 +29,7 @@ classif.load_state_dict(torch.load(classifier_weight_path,map_location=torch.dev
 classif.eval()
 
 # Enhancer
-enhancer_weight_path = 'modelSave/RRDB_ESRGAN_x4.pth'
+enhancer_weight_path = './modelSave/RRDB_ESRGAN_x4.pth'
 enhancer = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
 enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=torch.device('cpu')))
 enhancer.eval()
@@ -38,19 +37,23 @@ enhancer.eval()
 # ---------------
 
 
-def convertImage(image):
+def convertImage(image,doCrop=True):
     w,h = image.size
-    min_dim = min(w,h)
     resize = (120*factorResize, 120*factorResize)
     crop   = (64*factorResize, 64*factorResize)
 
-    process = transforms.Compose([
-        # transforms.CenterCrop((min_dim,min_dim)),
-        # transforms.Resize(crop),
-        transforms.Resize(resize), 
-        transforms.CenterCrop(crop),
-        transforms.ToTensor()
+    if doCrop : 
+        process = transforms.Compose([
+            transforms.Resize(resize), 
+            transforms.CenterCrop(crop),
+            transforms.ToTensor()
     ])
+    else : 
+        process = transforms.Compose([
+            transforms.Resize(crop), 
+            transforms.ToTensor()
+    ])
+
     image = process(image)
     c,w,h = image.shape
     image = image.view(1,c,w,h)
@@ -96,12 +99,13 @@ def predict(image):
     image = torch.clip(image,0,1)
     return image[:,:3]
 
-def impaint(mask,segment):
+def impaint(mask,segment,enhance):
     image = Image.open("./impaintingWeb/static/image/original.jpg")
     image   = convertImage(image)
     mask    = convertImage(mask)
-    segment = convertImage(segment)
+    segment = convertImage(segment,doCrop=False)
 
+    segment = segment * 255
     segment = (segment / 25) - 1
     segment = torch.round(segment)
     segment = (segment / 9) + 0.1
@@ -136,8 +140,16 @@ async def segmentPOST():
     dataB64    = ask["imgB64"]
     img = Image.open(BytesIO(base64.b64decode(dataB64))).convert('RGB')
     img.save("./impaintingWeb/static/image/original.jpg")
+    
+    original_crop = convertImage(img)
+    original_crop = transforms.ToPILImage()(original_crop[0])
+    newsize = (256,256)
+    original_crop = original_crop.resize(newsize)
+    original_crop.save("./impaintingWeb/static/image/original_crop.jpg")
+
     img = segment(img)
     img.save("./impaintingWeb/static/image/mask.jpg")
+
     return {"ok" : True}
 
 @impBP.route("/predict", methods=['POST'])
@@ -145,6 +157,8 @@ async def predictPOST():
     ask        = await request.form
     maskB64    = ask["maskB64"]
     segmentB64 = ask["segmentB64"]
+    doEnhance  = ask["doEnhance"]
+    doEnhance = doEnhance == "true" 
 
     mask = Image.open(BytesIO(base64.b64decode(maskB64)))
     mask.load() # required for png.split()
@@ -153,7 +167,7 @@ async def predictPOST():
     mask = maskRGB.convert("L")
     segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
 
-    predict = impaint(mask,segment)
+    predict = impaint(mask,segment,doEnhance)
     predict.save("./impaintingWeb/static/image/predict.jpg")
     return {"ok" : True}
     
