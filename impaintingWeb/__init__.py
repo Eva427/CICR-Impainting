@@ -81,7 +81,8 @@ def npToTensor(x):
 def segment(image):
     image = convertImage(image)
     with torch.no_grad():
-        image = torch.nn.functional.interpolate(image, scale_factor=scale_factor)
+        if scale_factor > 0 :
+            image = torch.nn.functional.interpolate(image, scale_factor=scale_factor)
         normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(image)
         classifiedImage = classif(normalized)
         # classifiedImage = torch.nn.functional.avg_pool2d(classifiedImage, scale_factor)
