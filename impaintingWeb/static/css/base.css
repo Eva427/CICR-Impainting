@@ -15,6 +15,10 @@ body {
     width: 50%;
 }
 
+#downloadMask {
+    margin-top: 10px;
+}
+
 #enhanceContainer>*,
 canvas {
     margin: 10px;

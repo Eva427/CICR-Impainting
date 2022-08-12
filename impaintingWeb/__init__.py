@@ -6,6 +6,7 @@ import impaintingLib as imp
 import numpy as np
 from torchvision import transforms
 from PIL import Image, ImageChops
+from datetime import datetime
 
 # ---------------
 
@@ -171,4 +172,20 @@ async def predictPOST():
     predict = impaint(mask,segment,doEnhance)
     predict.save("./impaintingWeb/static/image/predict.jpg")
     return {"ok" : True}
-    
+
+@impBP.route("/download", methods=['POST'])
+async def download():
+    ask        = await request.form
+    maskB64    = ask["maskB64"]
+    segmentB64 = ask["segmentB64"]
+
+    mask = Image.open(BytesIO(base64.b64decode(maskB64)))
+    mask.load() # required for png.split()
+    maskRGB = Image.new("RGB", mask.size, (255, 255, 255))
+    maskRGB.paste(mask, mask=mask.split()[3]) # 3 is the alpha channel
+    mask = maskRGB.convert("L")
+    segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
+
+    mask.save("./impaintingWeb/static/image/downloaded/mask.jpg")
+    segment.save("./impaintingWeb/static/image/downloaded/seg.jpg")
+    return {"ok" : True}

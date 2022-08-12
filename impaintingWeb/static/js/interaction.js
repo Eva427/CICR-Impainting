@@ -84,3 +84,38 @@ $('#predict').mousedown(function(e) {
         predictImg.src = predictPath;
     });
 });
+
+$('#download').mousedown(function(e) {
+    var maskB64 = canvasFrontMask.toDataURL("image/png");
+    maskB64 = maskB64.replace(/^data:image\/(png|jpg);base64,/, "");
+
+    redraw(false);
+    var segmentB64 = canvas.toDataURL("image/png");
+    segmentB64 = segmentB64.replace(/^data:image\/(png|jpg);base64,/, "");
+    redraw();
+    var filename = inputFile.files[0].name;
+    filename = filename.split('.')[0];
+    var url = "./static/image/downloaded/"
+
+    $.post('/imp/download', {
+        "maskB64": maskB64,
+        "segmentB64": segmentB64
+    }).done(function(response) {
+        var link = document.createElement('a');
+        document.body.appendChild(link);
+
+        link.href = url + "mask.jpg";
+        link.download = filename + "_mask.jpg";
+        link.click();
+
+        link.href = url + "seg.jpg";
+        link.download = filename + "_seg.jpg";
+        link.click();
+
+        document.body.removeChild(link);
+    });
+
+
+
+    
+});
