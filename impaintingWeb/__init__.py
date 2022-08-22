@@ -18,8 +18,8 @@ factorResize = 2
 scale_factor = 2
 
 # Impainter
-impainter = imp.model.UNet(4, netType="partial")
-impainter_weight_path = './modelSave/02_08/partial4channels_mid'
+impainter = imp.model.UNet(5, netType="partial")
+impainter_weight_path = './modelSave/09_01/bigRun2115' #02_08/partial4channels_mid'
 impainter.load_state_dict(torch.load(impainter_weight_path, map_location=torch.device('cpu')))
 impainter.eval()
 
@@ -34,6 +34,12 @@ enhancer_weight_path = './modelSave/RRDB_ESRGAN_x4.pth'
 enhancer = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
 enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=torch.device('cpu')))
 enhancer.eval()
+
+# Keypoints
+keypoint_weight_path = "./modelSave/keypoint.pt"
+keypointModel = imp.model.XceptionNet()
+keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=torch.device('cpu')))
+keypointModel.eval()
 
 # ---------------
 
@@ -96,6 +102,32 @@ def segment(image):
         pil_image = Image.fromarray(classifPlain[0])
     return pil_image
 
+def addKeypoints(images_list, landmarks_list):
+    n,_,w,h = images_list.shape
+    image_dim = w
+    layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
+    for i,(image, landmarks) in enumerate(zip(images_list, landmarks_list)):
+        image = (image - image.min())/(image.max() - image.min())
+        landmarks = landmarks.view(-1, 2)
+        landmarks = (landmarks + 0.5) * image_dim
+        landmarks = landmarks.cpu().detach().numpy().tolist()
+        landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
+        landmarks = torch.from_numpy(landmarks)
+        
+        layer = torch.empty((1, w, h), dtype=images_list.dtype, device=images_list.device).fill_(0.1)
+        for x,y in landmarks:
+            x = int(x.item()) - 1
+            y = int(y.item()) - 1
+            layer[0][y][x] = 1
+        layers[i] = layer
+    return layers
+
+def getKeypoints(x, model=keypointModel):
+    x = transforms.Grayscale()(x)
+    keypoints = model(x)
+    layers = addKeypoints(x, keypoints)
+    return layers
+
 def predict(image):
     image = impainter(image)
     image = torch.clip(image,0,1)
@@ -122,8 +154,11 @@ def impaint(mask,segment,enhance):
         x_prime[i] = propag_img
 
     x_prime2 = torch.cat((x_prime,segment),dim=1)
+    keypointLayer = getKeypoints(image)
+    x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
+
     with torch.no_grad():
-        image_hat = predict(x_prime2)
+        image_hat = predict(x_prime3)
         if enhance : 
             image_hat = enhancer(image_hat)
 
