@@ -180,7 +180,7 @@ async def segmentPOST():
     
     original_crop = convertImage(img)
     original_crop = transforms.ToPILImage()(original_crop[0])
-    newsize = (256,256)
+    newsize = (128,128)
     original_crop = original_crop.resize(newsize)
     original_crop.save("./impaintingWeb/static/image/original_crop.jpg")
 
@@ -220,6 +220,10 @@ async def download():
     maskRGB.paste(mask, mask=mask.split()[3]) # 3 is the alpha channel
     mask = maskRGB.convert("L")
     segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
+
+    # mask = convertImage(mask)
+    # mask = (mask < 0.5) * 1.
+    # mask = transforms.ToPILImage()(mask[0])
 
     mask.save("./impaintingWeb/static/image/downloaded/mask.jpg")
     segment.save("./impaintingWeb/static/image/downloaded/seg.jpg")
