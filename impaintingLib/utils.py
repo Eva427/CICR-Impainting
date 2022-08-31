@@ -7,6 +7,15 @@ from torchvision import transforms
 import torch
 import os
 
+def plot_img(x,title=""):
+    img_grid = make_grid(x[:16])
+    plt.figure(figsize=(20,15))
+    plt.imshow(img_grid.cpu().permute(1, 2, 0))
+    plt.axis('off')
+    if title:
+        plt.title(title)
+    plt.show()
+
 class Visu :
 
     def __init__(self, expeName = "default", runName = "default", save = False, gridSize = 16):

@@ -26,13 +26,19 @@ def getSize(factor=1):
     wc,hc = crop = (64 , 64 )
     batchSize = 32
         
-    if factor > 1 :
-        numWorker = 0
-        resize = (wr*factor,hr*factor)
-        crop   = (wc*factor,hc*factor)
-        
-    if factor > 3 :
-        batchSize = 16
+    if factor < 10 : 
+        if factor > 1 :
+            numWorker = 0
+            resize = (wr*factor,hr*factor)
+            crop   = (wc*factor,hc*factor)
+
+        if factor > 3 :
+            batchSize = 16
+    
+    # Si on lui passe un gros resize alors c'est qu'on voulait une taille et pas un facteur
+    else : 
+        crop = (factor,factor)
+        batchSize = 3
         
     return resize,crop,numWorker,batchSize
 
@@ -106,6 +112,27 @@ def inv_normalize(x):
                                    std=[1/0.229, 1/0.224, 1/0.225])
     x = x[:,:3]
     return transfo(x)
+
+def getTestData(file,factorResize=1,doCrop=True):
+    resize = (120*factorResize, 120*factorResize)
+    crop   = (64*factorResize, 64*factorResize)
+    if doCrop :
+        process = transforms.Compose([
+             transforms.Resize(resize), 
+             transforms.CenterCrop(crop),
+             transforms.ToTensor()
+        ])
+    else : 
+        process = transforms.Compose([
+             transforms.Resize(crop), 
+             transforms.ToTensor()
+        ])
+    return ImageFolder(file, process)
+
+def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
+    imageFolder = getTestData(file,factorResize,doCrop)
+    dataset = next(iter(DataLoader(imageFolder, num_workers=2, batch_size=16, shuffle=doShuffle)))
+    return dataset[0]
 
 # ------------- AUGMENTATION
 

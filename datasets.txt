@@ -1,0 +1,9 @@
+celeba : natif pytorch
+flickr : https://drive.google.com/drive/folders/1tg-Ur7d4vk1T8Bn0pPpUSQPxlPGBlGfv
+lfw : !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
+        !tar zxvf lfw.tgz > /dev/null 2>&1
+        !mkdir data > /dev/null 2>&1
+        !mv lfw data > /dev/null 2>&1
+utk : https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw
+nvidia mask training : https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip?dl=0
+vidia mask test : https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip?dl=0

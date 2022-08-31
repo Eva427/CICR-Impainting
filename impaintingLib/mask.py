@@ -17,7 +17,7 @@ def propagate(imgs,masks):
     imgs_masked = torch.empty((n, c, h, w), dtype=imgs.dtype, device=imgs.device)
     for i, (img, mask) in enumerate(zip(imgs, masks)):
         propag_img = img.clone()
-        mask_bit = (mask == 0) * 1.
+        mask_bit = (mask < 0.5) * 1.
         for j,channel in enumerate(img[:3]) :
             propag_img[j] = channel * mask_bit
 
