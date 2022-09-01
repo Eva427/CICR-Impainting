@@ -2,6 +2,7 @@ import impaintingLib as imp
 import torch
 import torchvision
 import numpy as np
+from torchvision import transforms
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

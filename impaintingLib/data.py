@@ -113,7 +113,7 @@ def inv_normalize(x):
     x = x[:,:3]
     return transfo(x)
 
-def getTestData(file,factorResize=1,doCrop=True):
+def getDataset(file,factorResize=1,doCrop=True,doShuffle=True):
     resize = (120*factorResize, 120*factorResize)
     crop   = (64*factorResize, 64*factorResize)
     if doCrop :
@@ -130,9 +130,9 @@ def getTestData(file,factorResize=1,doCrop=True):
     return ImageFolder(file, process)
 
 def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
-    imageFolder = getTestData(file,factorResize,doCrop)
-    dataset = next(iter(DataLoader(imageFolder, num_workers=2, batch_size=16, shuffle=doShuffle)))
-    return dataset[0]
+    dataset = getDataset(file,factorResize,doCrop,doShuffle)
+    dataset = DataLoader(dataset, num_workers=2, batch_size=16, shuffle=doShuffle)
+    return next(iter(dataset))[0]
 
 # ------------- AUGMENTATION
 
@@ -156,17 +156,17 @@ def zoom(img,factor=0):
     return img
 
 def crop(img):
-    (mu,sigma) = (40,10)
-    _,_,size,_ = img.shape
+    (mu,sigma) = (80,10)
+    size = img.size[0]
     factor = np.random.normal(mu, sigma)
     
-    transfo = transforms.Compose([transforms.RandomCrop(size*factor/100),
+    transfo = transforms.Compose([transforms.CenterCrop(size*factor/100),
                         transforms.Resize((size,size))])
     
     return transfo(img)
 
 def rotation(img):
-    (mu,sigma) = (1,1)
+    (mu,sigma) = (1.5,1)
     factor = np.random.normal(mu, sigma)
     factor = abs(factor)
     img = img.rotate(factor)
@@ -213,7 +213,8 @@ def randomTransfo(imgs):
 
         #print(nbTransfo)
         #transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
-        transfos = [mirror, lumi, contrast, color, sharpness]
+        #transfos = [mirror, lumi, contrast, color, sharpness]
+        transfos = [crop, rotation, mirror]
         for i in range(nbTransfo):
             func = random.choice(transfos)
             #print(func. __name__)
@@ -222,11 +223,3 @@ def randomTransfo(imgs):
             
         imgs[k] = transforms.ToTensor()(img.copy())
     return imgs
-
-#inv_tensor = inv_normalize(tensor)
-
-# getCeleba
-# getFacesPlusCeleba
-
-# méthodes de dataAugmentation ...
-# contraste / rotation / couleur / zoom

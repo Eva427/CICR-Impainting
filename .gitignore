@@ -126,8 +126,5 @@ dmypy.json
 
 # Custom ignore
 data/
-output/
-lfw.tgz
 runs/
-test.ipynb
 savedImages
