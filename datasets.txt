@@ -1,27 +1,13 @@
-celeba : wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1jzB6-Ohgos8yeK8mrBws5OlUGVhrDF4L' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1jzB6-Ohgos8yeK8mrBws5OlUGVhrDF4L" -O celeba.zip && rm -rf /tmp/cookies.txt
+En cas d'erreur liens de téléchargement : 
 
-- https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing&resourcekey=0-dYn9z10tMJOBAkviAcfdyQ
+celeba : https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing&resourcekey=0-dYn9z10tMJOBAkviAcfdyQ
 
-flickr : 
+flickr : https://drive.google.com/drive/folders/1tg-Ur7d4vk1T8Bn0pPpUSQPxlPGBlGfv
 
-- https://drive.google.com/drive/folders/1tg-Ur7d4vk1T8Bn0pPpUSQPxlPGBlGfv
-
-lfw : !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
-        !tar zxvf lfw.tgz > /dev/null 2>&1
-        !mkdir data > /dev/null 2>&1
-        !mv lfw data > /dev/null 2>&1
+lfw : http://vis-www.cs.umass.edu/lfw/lfw.tgz
         
-utk : 
+utk : https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw
 
-- https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw
+nvidia mask training : https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip
 
-nvidia mask training : 
-
-- https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip
-
-nvidia mask test : 
-
-- https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip
-
-
-- écrire un plan de secours au cas où datasets marche pas
+nvidia mask test : https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip
