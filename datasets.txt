@@ -17,11 +17,11 @@ utk :
 
 nvidia mask training : 
 
-- https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip?dl=0
+- https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip
 
 nvidia mask test : 
 
-- https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip?dl=0
+- https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip
 
 
 - écrire un plan de secours au cas où datasets marche pas
