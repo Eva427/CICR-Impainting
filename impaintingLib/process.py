@@ -46,26 +46,6 @@ def model_load(models, runName):
     
     return models
 
-def npToTensor(x):
-    c,w,h = x.shape
-    x = x / 8
-    x = torch.from_numpy(x).to(device)
-    x = torch.reshape(x, (c,1,w,h))
-    return x
-
-def simplifyChannels(x):
-    x = x.argmax(1)
-    x[x==5] = 4
-    x[x==6] = 5
-    x[x==7] = 5
-    x[x==8] = 6
-    x[x==9] = 6
-    x[x==10] = 7
-    x[x==11] = 8
-    x[x==12] = 8
-    x[x>12] = 0
-    return (x/9).unsqueeze(1) + 0.1
-
 def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None, classify=False):
     
     for epoch in range(epochs):

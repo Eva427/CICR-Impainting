@@ -76,7 +76,7 @@ def visualize_batch(images_list, landmarks_list, shape = (1, 8), title = None, s
         plt.savefig(save)
     plt.show()
     
-def addKeypoints(images_list, landmarks_list, title = None, save = None):
+def addKeypoints(images_list, landmarks_list):
     n,c,w,h = images_list.shape
     image_dim = w
     layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
@@ -96,18 +96,21 @@ def addKeypoints(images_list, landmarks_list, title = None, save = None):
         layers[i] = layer
     return layers
 
-def getKeypoints(x, model=keypointModel, title = None, save = None):
+def getKeypoints(x, model=keypointModel):
     x = torchvision.transforms.Grayscale()(x)
     with torch.no_grad():
         keypoints = model(x)
-        layers = addKeypoints(x, keypoints, title = title, save = save)
+        layers = addKeypoints(x, keypoints)
     return layers
 
-def keypointLoss(x,x_hat):
-    keypointX = getKeypoints(x)
-    keypointX_hat = getKeypoints(x_hat)
-    mse = torch.nn.MSELoss()
-    loss = mse(keypointX,keypointX_hat)
-    if not loss :
-        loss = 0
-    return loss
+##### ESRGAN
+
+suprRes_path = 'modelSave/RRDB_ESRGAN_x4.pth'
+superResModel = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
+superResModel.load_state_dict(torch.load(suprRes_path), strict=True)
+superResModel.eval()
+superResModel = superResModel.to(device)
+
+def superRes(x):
+    with torch.no_grad():
+        return superResModel(x)

@@ -2,23 +2,9 @@ from torchvision.datasets.folder import ImageFolder
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch
+import impaintingLib as imp
 
-sizeTrain = 12000
-sizeTest  = 1233
-
-# def downloadFaces():
-#     !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
-#     !tar zxvf lfw.tgz > /dev/null 2>&1
-#     !mkdir data > /dev/null 2>&1
-#     !mv lfw data > /dev/null 2>&1
-
-def addChannel(imgs):
-    n, c, h, w = imgs.shape
-    all_img = torch.empty((n, 4, h, w), dtype=imgs.dtype, device=imgs.device)
-    for i,img in enumerate(imgs):
-        blank_layer = torch.full((1,h,w),255, dtype=img.dtype, device=img.device)
-        all_img[i] = torch.cat((img,blank_layer),0)
-    return all_img
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def getSize(factor=1):
     numWorker = 2 
@@ -41,40 +27,6 @@ def getSize(factor=1):
         batchSize = 3
         
     return resize,crop,numWorker,batchSize
-
-def getData(path,**kwargs):
-   
-    if not kwargs["shuffle"] :
-        torch.manual_seed(0)
-        
-    resize,crop,numWorker,batchSize = getSize(kwargs["resize"])
-    transformations = [
-         transforms.Resize(resize), 
-         transforms.CenterCrop(crop),
-         transforms.ToTensor()
-    ]
-    
-    kwargs["num_workers"] = numWorker
-    kwargs["batch_size"]  = batchSize
-    kwargs.pop("resize")
-    
-    process = transforms.Compose(transformations)
-    dataset = ImageFolder(path, process)
-    
-    sizeTest = int(len(dataset) / 10)
-    sizeTrain = len(dataset) - sizeTest
-    
-    lengths = [sizeTrain, sizeTest]
-    gen = torch.Generator()
-    gen.manual_seed(0)
-    train_set, val_set = torch.utils.data.random_split(dataset, lengths, generator=gen)
-    
-    return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
-
-def getFaces(shuffle=True,doNormalize=True,resize=1):
-    return getData(path='data/lfw', 
-                    shuffle=shuffle, 
-                    resize=resize) 
 
 def getMasks(seed=0,resize=1,test=False):
     
@@ -134,7 +86,48 @@ def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
     dataset = DataLoader(dataset, num_workers=2, batch_size=16, shuffle=doShuffle)
     return next(iter(dataset))[0]
 
-# ------------- AUGMENTATION
+def testReal(impainter,base=True,altered=True,segmented=False,keypoints=False,predicted=True):
+    image = getTestImages("./data/test/real",factorResize=2).to(device)
+    mask = getTestImages("./data/test/mask",factorResize=2).to(device)
+    segment  = getTestImages("./data/test/seg",factorResize=2,doCrop=False).to(device)
+
+    segment = transforms.Grayscale()(segment)
+    segment = segment * 255
+    segment = (segment / 25) - 1
+    segment = torch.round(segment)
+    segment = (segment / 9) + 0.1
+
+    mask = transforms.Grayscale()(mask)
+    n, c, h, w = image.shape
+    x_prime = torch.empty((n, c, h, w), dtype=image.dtype, device=image.device)
+    for i, (img, mask) in enumerate(zip(image, mask)):
+        propag_img = img.clone()
+        mask_bit = (mask > 0.5) * 1.
+        for j,channel in enumerate(img[:3]) :
+            propag_img[j] = channel * mask_bit
+        x_prime[i] = propag_img
+
+    x_prime2 = torch.cat((x_prime,segment),dim=1)
+    keypointLayer = imp.components.getKeypoints(image)
+    x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
+
+    with torch.no_grad():
+        image_hat = impainter(x_prime3)
+        image_hat = torch.clip(image_hat,0,1)
+        image_hat = image_hat[:,:3]
+
+    if base :
+        imp.utils.plot_img(image)
+    if altered : 
+        imp.utils.plot_img(x_prime)
+    if segmented : 
+        imp.utils.plot_img(segment)
+    if keypoints : 
+        imp.utils.plot_img(keypointLayer)
+    if predicted :
+        imp.utils.plot_img(image_hat)
+
+# ------------- DATA AUGMENTATION
 
 from PIL import Image, ImageEnhance
 import numpy as np

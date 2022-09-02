@@ -66,24 +66,6 @@ class Alter :
             imgs_low = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=True)(imgs_low)
         return imgs_low
     
-    # deprecated
-    def irregularMaskOLD(self,imgs):
-    
-        maskPath = "./data/masks/"
-        files = [f for f in listdir(maskPath) if isfile(join(maskPath, f))]
-        n,c,w,h = imgs.shape
-
-        masks = torch.empty((n, 1, h, w), dtype=imgs.dtype, device=imgs.device)
-        for i,img in enumerate(imgs) : 
-            path = maskPath + random.choice(files)
-            with Image.open(path) as mask:
-                mask = transforms.ToTensor()(mask)
-                mask = transforms.Resize((w,h))(mask)
-                masks[i] = mask
-
-        imgs_masked = propagate(imgs,masks)
-        return imgs_masked
-    
     def irregularMask(self,imgs):
         
         try:
