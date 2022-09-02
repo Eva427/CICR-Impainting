@@ -1,24 +1,96 @@
-<div>
-    <div>
-        <button id="clear" type="button">Clear</button>
-        <button id="undo" type="button">Undo</button>
-        <input type="range" id="size" name="size" min="1" max="20">
-        <label for="size">Brush Size</label>
-    </div>
+<!DOCTYPE html>
+<html>
 
-    <div>
-        <button id="chooseColorBG" type="button">BG</button>
-        <button id="chooseColorSkin" type="button">Skin</button>
-        <button id="chooseColorNose" type="button">Nose</button>
-        <button id="chooseColorEye" type="button">Eye</button>
-        <button id="chooseColorEyebrow" type="button">Eyebrow</button>
-        <button id="chooseColorEar" type="button">Ear</button>
-        <button id="chooseColorMouth" type="button">Mouth</button>
-        <button id="chooseColorLip" type="button">Lip</button>
-    </div>
-</div>
+<head>
+    <script src="https://unpkg.com/konva@8.3.12/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>Konva Drag and Drop Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
 
-<canvas id="canvas" width="490" height="220" style="border:1px solid blue"></canvas>
+<body>
+    <div id="KonvaContainer"></div>
+    <script>
+        var width = 256;
+        var height = 256;
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script type="text/javascript" src="test.js"></script>
+        var stage = new Konva.Stage({
+            container: 'KonvaContainer',
+            width: width,
+            height: height,
+        });
+
+        var layer1 = new Konva.Layer();
+        var layer2 = new Konva.Layer();
+
+        var imageObj = new Image();
+        imageObj.onload = function() {
+            var yoda = new Konva.Image({
+                image: imageObj,
+                width: width,
+                height: height,
+            });
+            layer1.add(yoda);
+        };
+        imageObj.src = './linkdin.jpg';
+
+        var pointList = [];
+
+        var createKeypoint = function(x, y) {
+            var point = new Konva.Circle({
+                x: x,
+                y: y,
+                radius: 4,
+                fill: '#00D2FF',
+                stroke: 'black',
+                strokeWidth: 1.5,
+                draggable: true,
+            });
+
+            pointList.push(point)
+
+            // add cursor styling
+            point.on('mouseover', function() {
+                document.body.style.cursor = 'pointer';
+            });
+            point.on('mouseout', function() {
+                document.body.style.cursor = 'default';
+            });
+            point.on('mouseup', function() {
+                console.log(point._lastPos);
+                console.log(point._id - 4);
+            });
+
+            layer2.add(point);
+        };
+
+        var addAllKeypoints = function(keypoints) {
+            for (const [x, y] of keypoints) {
+                createKeypoint(x, y);
+            }
+        }
+
+        const keypoints = [
+            [10, 10],
+            [20, 20],
+            [30, 30],
+            [40, 40],
+            [50, 50],
+            [60, 60]
+        ];
+        addAllKeypoints(keypoints);
+        console.log(pointList);
+
+        stage.add(layer1);
+        stage.add(layer2);
+    </script>
+</body>
+
+</html>
