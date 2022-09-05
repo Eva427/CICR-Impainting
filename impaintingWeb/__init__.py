@@ -7,6 +7,9 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image, ImageChops
 from datetime import datetime
+import json
+
+from impaintingLib.model import keypoint
 
 # ---------------
 
@@ -86,7 +89,6 @@ def npToTensor(x):
     return x
 
 def segment(image):
-    image = convertImage(image)
     with torch.no_grad():
         if scale_factor > 0 :
             image = torch.nn.functional.interpolate(image, scale_factor=scale_factor)
@@ -104,16 +106,8 @@ def segment(image):
 
 def addKeypoints(images_list, landmarks_list):
     n,_,w,h = images_list.shape
-    image_dim = w
     layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
-    for i,(image, landmarks) in enumerate(zip(images_list, landmarks_list)):
-        image = (image - image.min())/(image.max() - image.min())
-        landmarks = landmarks.view(-1, 2)
-        landmarks = (landmarks + 0.5) * image_dim
-        landmarks = landmarks.cpu().detach().numpy().tolist()
-        landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
-        landmarks = torch.from_numpy(landmarks)
-        
+    for i,landmarks in enumerate(landmarks_list):
         layer = torch.empty((1, w, h), dtype=images_list.dtype, device=images_list.device).fill_(0.1)
         for x,y in landmarks:
             x = int(x.item()) - 1
@@ -122,27 +116,37 @@ def addKeypoints(images_list, landmarks_list):
         layers[i] = layer
     return layers
 
-def getKeypoints(x, model=keypointModel):
+def getLandmarks(x):
     x = transforms.Grayscale()(x)
-    keypoints = model(x)
+    keypoint_list = []
+    with torch.no_grad():
+        keypoints = keypointModel(x)
+        _,_,w,_ = x.shape
+        image_dim = w
+        for landmarks in keypoints:
+            landmarks = landmarks.view(-1, 2)
+            landmarks = (landmarks + 0.5) * image_dim
+            landmarks = landmarks.cpu().detach().numpy().tolist()
+            landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
+            landmarks = torch.from_numpy(landmarks)
+            keypoint_list.append(landmarks)
+    return keypoint_list
+
+def getKeypoints(x, model=keypointModel):
+    keypoints = getLandmarks(x)
     layers = addKeypoints(x, keypoints)
     return layers
 
-def predict(image):
-    image = impainter(image)
-    image = torch.clip(image,0,1)
-    return image[:,:3]
-
-def impaint(mask,segment,enhance):
+def impaint(mask,segmented,enhance,keypoints,modelOpt):
     image = Image.open("./impaintingWeb/static/image/original.jpg")
     image   = convertImage(image)
     mask    = convertImage(mask)
-    segment = convertImage(segment,doCrop=False)
+    segmented = convertImage(segmented,doCrop=False)
 
-    segment = segment * 255
-    segment = (segment / 25) - 1
-    segment = torch.round(segment)
-    segment = (segment / 9) + 0.1
+    segmented = segmented * 255
+    segmented = (segmented / 25) - 1
+    segmented = torch.round(segmented)
+    segmented = (segmented / 9) + 0.1
 
     n, c, h, w = image.shape
     x_prime = torch.empty((n, c, h, w), dtype=image.dtype, device=image.device)
@@ -153,12 +157,19 @@ def impaint(mask,segment,enhance):
             propag_img[j] = channel * mask_bit
         x_prime[i] = propag_img
 
-    x_prime2 = torch.cat((x_prime,segment),dim=1)
-    keypointLayer = getKeypoints(image)
+    x_prime2 = torch.cat((x_prime,segmented),dim=1)
+    keypointLayer = addKeypoints(image, keypoints)
     x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
 
     with torch.no_grad():
-        image_hat = predict(x_prime3)
+
+        if modelOpt == "default" : 
+            image_hat = impainter(x_prime3)
+        else : 
+            print("Error no model found")
+            image_hat = x_prime3
+            
+        image_hat = torch.clip(image_hat,0,1)[:,:3]
         if enhance : 
             image_hat = enhancer(image_hat)
 
@@ -171,6 +182,10 @@ def impaint(mask,segment,enhance):
 async def home():
     return await render_template('home.html')
 
+# Recevoir l'image encodé en Base 64
+# Générer la segmentation et croper/resizer au bon format
+# Stocker ces informations sous forme d'image
+# Générer les keypoints et les envoyer en réponse sous forme de liste  
 @impBP.route("/segment", methods=['POST'])
 async def segmentPOST():
     ask        = await request.form
@@ -179,35 +194,48 @@ async def segmentPOST():
     img.save("./impaintingWeb/static/image/original.jpg")
     
     original_crop = convertImage(img)
+    segmented = segment(original_crop)
+    segmented.save("./impaintingWeb/static/image/mask.jpg")
+
+    keypoints = getLandmarks(original_crop)[0]
+    keypoints = keypoints.tolist()
+
     original_crop = transforms.ToPILImage()(original_crop[0])
-    newsize = (128,128)
-    original_crop = original_crop.resize(newsize)
     original_crop.save("./impaintingWeb/static/image/original_crop.jpg")
 
-    img = segment(img)
-    img.save("./impaintingWeb/static/image/mask.jpg")
+    return {"keypoints" : keypoints}
 
-    return {"ok" : True}
-
+# Recevoir masques, segementation, keypoints et choix sur la super résolution
+# Convertir les informations reçues au bon format
+# Faire la prédiction et la sauvegarder
 @impBP.route("/predict", methods=['POST'])
 async def predictPOST():
     ask        = await request.form
     maskB64    = ask["maskB64"]
     segmentB64 = ask["segmentB64"]
     doEnhance  = ask["doEnhance"]
+    modelOpt   = ask["modelOpt"]
+    keypoints  = ask["keypoints"]
     doEnhance = doEnhance == "true" 
 
     mask = Image.open(BytesIO(base64.b64decode(maskB64)))
     mask.load() # required for png.split()
     maskRGB = Image.new("RGB", mask.size, (255, 255, 255))
+
     maskRGB.paste(mask, mask=mask.split()[3]) # 3 is the alpha channel
     mask = maskRGB.convert("L")
     segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
 
-    predict = impaint(mask,segment,doEnhance)
+    keypoints = json.loads(keypoints)
+    keypoints = torch.Tensor(keypoints)
+    keypoints = torch.unsqueeze(keypoints, dim=0)
+
+    predict = impaint(mask,segment,doEnhance,keypoints,modelOpt)
     predict.save("./impaintingWeb/static/image/predict.jpg")
     return {"ok" : True}
 
+# Recevoir le masque et la segmentation
+# Les télécharger
 @impBP.route("/download", methods=['POST'])
 async def download():
     ask        = await request.form
@@ -220,10 +248,6 @@ async def download():
     maskRGB.paste(mask, mask=mask.split()[3]) # 3 is the alpha channel
     mask = maskRGB.convert("L")
     segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
-
-    # mask = convertImage(mask)
-    # mask = (mask < 0.5) * 1.
-    # mask = transforms.ToPILImage()(mask[0])
 
     mask.save("./impaintingWeb/static/image/downloaded/mask.jpg")
     segment.save("./impaintingWeb/static/image/downloaded/seg.jpg")

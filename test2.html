@@ -2,94 +2,93 @@
 <html>
 
 <head>
-    <script src="https://unpkg.com/konva@8.3.12/konva.min.js"></script>
-    <meta charset="utf-8" />
-    <title>Konva Drag and Drop Demo</title>
+
+    <!-- All the required libraries to
+		crop the image-->
+    <link rel="stylesheet" href="jquery.Jcrop.min.css" type="text/css" />
+    <script src="jquery.min.js"></script>
+    <script src="jquery.Jcrop.min.js"></script>
+
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #f0f0f0;
+            width: 500px;
+            height: 380px;
+            font-family: Arial, Sans-serif;
+        }
+        
+        .btnSubmitClass {
+            background-color: #696969;
+            padding: 5px 30px;
+            border: #696969 1px solid;
+            border-radius: 4px;
+            color: #FFFFFF;
+            margin-top: 10px;
+        }
+        
+        input#cropBtnID {
+            padding: 5px 25px 5px 25px;
+            background: #D3D3D3;
+            border: #98b398 1px solid;
+            color: #FFF;
+            visibility: hidden;
+        }
+        
+        #outputImage {
+            margin-top: 40px;
         }
     </style>
 </head>
 
 <body>
-    <div id="KonvaContainer"></div>
-    <script>
-        var width = 256;
-        var height = 256;
+    <h2>
+        How to crop image using jQuery and PHP
+    </h2>
 
-        var stage = new Konva.Stage({
-            container: 'KonvaContainer',
-            width: width,
-            height: height,
-        });
+    <div>
+        <img src="linkdin.jpg" id="cropImageID" width="256px" height="256px" class="img" /><br />
+    </div>
+    <div id="btn">
+        <input type='button' id="cropBtnID" value='Crop Image'>
+    </div>
+    <div>
+        <img src="#" id="outputImage" style="display:none;">
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var size;
+            $('#cropImageID').Jcrop({
 
-        var layer1 = new Konva.Layer();
-        var layer2 = new Konva.Layer();
+                /* Some settings for
+                basic configuration*/
+                allowSelect: true,
+                allowMove: true,
+                allowResize: true,
+                fixedSupport: true,
+                aspectRatio: 1,
+                onSelect: function(c) {
+                        size = {
+                            x: c.x,
+                            y: c.y,
+                            w: c.w,
+                            h: c.h
+                        };
 
-        var imageObj = new Image();
-        imageObj.onload = function() {
-            var yoda = new Konva.Image({
-                image: imageObj,
-                width: width,
-                height: height,
+                        $("#cropBtnID").css(
+                            "visibility", "visible");
+                    } //end onSelect
+            }); //end Jcrop method
+
+            $("#cropBtnID").click(function() {
+                var img = $("#cropImageID").attr('src');
+                $("#outputImage").show();
+
+                $("#outputImage").attr('src',
+                    'image-features.php?x = ' +
+                    size.x + ' & y=' + size.y +
+                    ' & w=' + size.w + '&h=' +
+                    size.h + '&img=' + img);
             });
-            layer1.add(yoda);
-        };
-        imageObj.src = './linkdin.jpg';
-
-        var pointList = [];
-
-        var createKeypoint = function(x, y) {
-            var point = new Konva.Circle({
-                x: x,
-                y: y,
-                radius: 4,
-                fill: '#00D2FF',
-                stroke: 'black',
-                strokeWidth: 1.5,
-                draggable: true,
-            });
-
-            pointList.push(point)
-
-            // add cursor styling
-            point.on('mouseover', function() {
-                document.body.style.cursor = 'pointer';
-            });
-            point.on('mouseout', function() {
-                document.body.style.cursor = 'default';
-            });
-            point.on('mouseup', function() {
-                console.log(point._lastPos);
-                console.log(point._id - 4);
-            });
-
-            layer2.add(point);
-        };
-
-        var addAllKeypoints = function(keypoints) {
-            for (const [x, y] of keypoints) {
-                createKeypoint(x, y);
-            }
-        }
-
-        const keypoints = [
-            [10, 10],
-            [20, 20],
-            [30, 30],
-            [40, 40],
-            [50, 50],
-            [60, 60]
-        ];
-        addAllKeypoints(keypoints);
-        console.log(pointList);
-
-        stage.add(layer1);
-        stage.add(layer2);
+        }); //end document ready fn
     </script>
 </body>
 

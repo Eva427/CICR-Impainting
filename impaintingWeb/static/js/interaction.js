@@ -6,8 +6,17 @@ enhance = document.getElementById('enhance')
 loading = document.getElementById('loading')
 loading.style.visibility = "hidden";
 
+var firstKeypoints = []
+
+$('#resetKeypoints').mousedown(function(e) {
+    resetKeypoints(firstKeypoints);
+})
+
+
 $('#inputFile').change(function(e) {
     objectURL = URL.createObjectURL(inputFile.files[0]);
+
+    // Ajoute à gauche l'image qu'on vient d'importer
     imgMask.src = objectURL;
     imgMask.onload = function() {
         var maxSizeMask = Math.max(imgMask.width, imgMask.height);
@@ -26,12 +35,14 @@ $('#inputFile').change(function(e) {
         var dataURL = canvasBackMask.toDataURL("image/png");
         dataURL = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
 
+        // Envoie au backend l'image sous forme de texte encodé puis la trace au milieu pour la segmentation
+        // La réponse est censé être un vecteur de coordonée (pour les keypoints)
         $.post('/imp/segment', { "imgB64": dataURL }).done(function(response) {
-            if (response["ok"]) {
+            if (response) {
                 var timestamp = new Date().getTime();
-                var queryString = "?t=" + timestamp;
-                imgBack.src = "./static/image/mask.jpg" + queryString
-                imgMiddle.src = "./static/image/original_crop.jpg" + queryString
+                var queryString = "?t=" + timestamp; // permet de refresh le src automatiquement
+                imgBack.src = "./static/image/mask.jpg" + queryString;
+                imgMiddle.src = "./static/image/original_crop.jpg" + queryString;
 
                 imgBack.onload = function() {
                     imgMiddle.onload = function() {
@@ -56,6 +67,11 @@ $('#inputFile').change(function(e) {
                         canvasFront.height = imgBack.height;
                     }
                 };
+
+                // Keypoints
+                imageObj.src = "./static/image/original_crop.jpg" + queryString;
+                firstKeypoints = response["keypoints"]
+                addAllKeypoints(response["keypoints"]);
             }
         });
     };
@@ -75,7 +91,9 @@ $('#predict').mousedown(function(e) {
     $.post('/imp/predict', {
         "maskB64": maskB64,
         "segmentB64": segmentB64,
-        "doEnhance": enhance.checked
+        "doEnhance": enhance.checked,
+        "keypoints": JSON.stringify(getAllKeypoints()),
+        "modelOpt": document.querySelector('input[name="modelOption"]:checked').value
     }).done(function(response) {
         loading.style.visibility = "hidden";
         var timestamp = new Date().getTime();
@@ -114,8 +132,4 @@ $('#download').mousedown(function(e) {
 
         document.body.removeChild(link);
     });
-
-
-
-    
 });

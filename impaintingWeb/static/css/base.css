@@ -2,6 +2,10 @@ body {
     background: beige !important;
 }
 
+a:link {
+    text-decoration: none;
+}
+
 .container {
     margin: 5%;
 }
@@ -15,7 +19,8 @@ body {
     width: 50%;
 }
 
-#downloadMask {
+#download,
+.collapse {
     margin-top: 10px;
 }
 
@@ -31,8 +36,16 @@ canvas {
     align-items: center;
 }
 
-.reglageCommun>* {
+.reglageCommun>*,
+a {
     margin: 2px;
+}
+
+#KonvaContainer {
+    border: 1px solid blue;
+    width: 256px;
+    height: 256px;
+    margin: 10px;
 }
 
 
