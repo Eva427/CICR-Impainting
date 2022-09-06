@@ -130,3 +130,4 @@ impaintingWeb/static/image/*.jpg
 impaintingWeb/static/image/downloaded/*.jpg
 data/*
 !data/test
+pistesRecherche/*
