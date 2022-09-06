@@ -56,16 +56,8 @@ keypointModel.eval()
     
 def addKeypoints(images_list, landmarks_list):
     n,c,w,h = images_list.shape
-    image_dim = w
     layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
-    for i,(image, landmarks) in enumerate(zip(images_list, landmarks_list)):
-        image = (image - image.min())/(image.max() - image.min())
-        landmarks = landmarks.view(-1, 2)
-        landmarks = (landmarks + 0.5) * image_dim
-        landmarks = landmarks.cpu().detach().numpy().tolist()
-        landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
-        landmarks = torch.from_numpy(landmarks).to(device)
-        
+    for i, landmarks in enumerate(landmarks_list):
         layer = torch.empty((1, w, h), dtype=images_list.dtype, device=images_list.device).fill_(0.1)
         for x,y in landmarks:
             x = int(x.item()) - 1
@@ -74,11 +66,25 @@ def addKeypoints(images_list, landmarks_list):
         layers[i] = layer
     return layers
 
-def getKeypoints(x, model=keypointModel):
+def getLandmarks(x):
     x = torchvision.transforms.Grayscale()(x)
+    keypoint_list = []
     with torch.no_grad():
-        keypoints = model(x)
-        layers = addKeypoints(x, keypoints)
+        keypoints = keypointModel(x)
+        _,_,w,_ = x.shape
+        image_dim = w
+        for landmarks in keypoints:
+            landmarks = landmarks.view(-1, 2)
+            landmarks = (landmarks + 0.5) * image_dim
+            landmarks = landmarks.cpu().detach().numpy().tolist()
+            landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
+            landmarks = torch.from_numpy(landmarks).to(device)
+            keypoint_list.append(landmarks)
+    return keypoint_list
+
+def getKeypoints(x, model=keypointModel):
+    keypoints = getLandmarks(x)
+    layers = addKeypoints(x, keypoints)
     return layers
 
 ##### ESRGAN
