@@ -128,3 +128,5 @@ dmypy.json
 data/
 runs/
 savedImages
+*.png
+*.jpg
