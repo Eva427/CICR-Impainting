@@ -3,6 +3,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch
 import impaintingLib as imp
+import random
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -90,6 +91,20 @@ def testReal(impainter,base=True,altered=True,segmented=False,keypoints=False,pr
     image = getTestImages("./data/test/real",factorResize=2).to(device)
     mask = getTestImages("./data/test/mask",factorResize=2).to(device)
     segment  = getTestImages("./data/test/seg",factorResize=2,doCrop=False).to(device)
+    
+    imsize = len(image)
+    if len(image) < 8 : 
+        new_image = image.clone()
+        new_mask  = mask.clone()
+        new_seg   = segment.clone()
+        for i in range(8 - imsize):
+            k = random.randint(0, imsize-1)
+            new_image = torch.cat((new_image,image[k].unsqueeze(dim=0)),dim=0)
+            new_mask = torch.cat((new_mask,mask[k].unsqueeze(dim=0)),dim=0)
+            new_seg = torch.cat((new_seg,segment[k].unsqueeze(dim=0)),dim=0)
+        image = new_image
+        mask = new_mask
+        segment = new_seg
 
     segment = transforms.Grayscale()(segment)
     segment = segment * 255
