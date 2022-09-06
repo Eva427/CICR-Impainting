@@ -15,7 +15,7 @@ def transformer():
 
 def getTrainedModel():
     model = imp.model.ClassifierUNet().to(device)
-    model.load_state_dict(torch.load(modelPath))
+    model.load_state_dict(torch.load(modelPath,map_location=device))
     model.eval()
     return model
         

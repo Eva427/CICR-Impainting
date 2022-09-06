@@ -51,30 +51,8 @@ def get_segmentation(x, segmenter=classif, scale_factor=4, simplify=True):
 #### Keypoints
 
 keypointModel = imp.model.XceptionNet().to(device) 
-keypointModel.load_state_dict(torch.load("./modelSave/keypoint.pt"))
+keypointModel.load_state_dict(torch.load("./modelSave/keypoint.pt",map_location=device))
 keypointModel.eval()
-
-def visualize_batch(images_list, landmarks_list, shape = (1, 8), title = None, save = None):
-    n,c,w,h = images_list.shape
-    image_dim = w
-    fig = plt.figure(figsize = (20, 15))
-    grid = ImageGrid(fig, 111, nrows_ncols = shape, axes_pad = 0.08)
-    for ax, image, landmarks in zip(grid, images_list, landmarks_list):
-        image = (image - image.min())/(image.max() - image.min())
-        landmarks = landmarks.view(-1, 2)
-        landmarks = (landmarks + 0.5) * image_dim
-        landmarks = landmarks.cpu().detach().numpy().tolist()
-        landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
-
-        ax.imshow(image[0].cpu(), cmap = 'gray')
-        ax.scatter(landmarks[:, 0], landmarks[:, 1], s = 10, c = 'dodgerblue')
-        ax.axis('off')
-
-    if title:
-        print(title)
-    if save:
-        plt.savefig(save)
-    plt.show()
     
 def addKeypoints(images_list, landmarks_list):
     n,c,w,h = images_list.shape
@@ -107,7 +85,7 @@ def getKeypoints(x, model=keypointModel):
 
 suprRes_path = 'modelSave/RRDB_ESRGAN_x4.pth'
 superResModel = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
-superResModel.load_state_dict(torch.load(suprRes_path), strict=True)
+superResModel.load_state_dict(torch.load(suprRes_path,map_location=device), strict=True)
 superResModel.eval()
 superResModel = superResModel.to(device)
 
