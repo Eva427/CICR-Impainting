@@ -39,7 +39,7 @@ enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=torch.devi
 enhancer.eval()
 
 # Keypoints
-keypoint_weight_path = "./modelSave/keypoint.pt"
+keypoint_weight_path = "./modelSave/keypoint.pth"
 keypointModel = imp.model.XceptionNet()
 keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=torch.device('cpu')))
 keypointModel.eval()

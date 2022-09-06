@@ -51,7 +51,7 @@ def get_segmentation(x, segmenter=classif, scale_factor=4, simplify=True):
 #### Keypoints
 
 keypointModel = imp.model.XceptionNet().to(device) 
-keypointModel.load_state_dict(torch.load("./modelSave/keypoint.pt",map_location=device))
+keypointModel.load_state_dict(torch.load("./modelSave/keypoint.pth",map_location=device))
 keypointModel.eval()
     
 def addKeypoints(images_list, landmarks_list):
