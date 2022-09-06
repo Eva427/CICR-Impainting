@@ -20,28 +20,30 @@ impBP = Blueprint('imp', __name__, template_folder='templates', static_folder='s
 factorResize = 2
 scale_factor = 2
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # Impainter
 impainter = imp.model.UNet(5, netType="partial")
-impainter_weight_path = './modelSave/09_01/bigRun2115' #02_08/partial4channels_mid'
-impainter.load_state_dict(torch.load(impainter_weight_path, map_location=torch.device('cpu')))
+impainter_weight_path = './modelSave/impainter.pth'
+impainter.load_state_dict(torch.load(impainter_weight_path, map_location=device))
 impainter.eval()
 
 # Classifier
 classifier_weight_path = "./modelSave/classifierUNet.pth"
 classif = imp.model.ClassifierUNet()
-classif.load_state_dict(torch.load(classifier_weight_path,map_location=torch.device('cpu')))
+classif.load_state_dict(torch.load(classifier_weight_path,map_location=device))
 classif.eval()
 
 # Enhancer
 enhancer_weight_path = './modelSave/RRDB_ESRGAN_x4.pth'
 enhancer = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
-enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=torch.device('cpu')))
+enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=device))
 enhancer.eval()
 
 # Keypoints
 keypoint_weight_path = "./modelSave/keypoint.pth"
 keypointModel = imp.model.XceptionNet()
-keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=torch.device('cpu')))
+keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=device))
 keypointModel.eval()
 
 # ---------------
