@@ -125,7 +125,9 @@ dmypy.json
 .pyre/
 
 # Custom ignore
-data/
-output/
-lfw.tgz
 runs/
+impaintingWeb/static/image/*.jpg
+impaintingWeb/static/image/downloaded/*.jpg
+data/*
+!data/test
+pistesRecherche/*

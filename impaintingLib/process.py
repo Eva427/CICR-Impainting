@@ -2,75 +2,162 @@ import torch
 from statistics import mean
 from tqdm.notebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import os
+from torchvision import transforms
 
+import numpy as np
 import impaintingLib as imp
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+classif = imp.loss.getTrainedModel()
 
 def pathFromRunName(runName):
     modelSavePrefix = "./modelSave/"
     runName = runName.replace(" ","_")
-    path = modelSavePrefix + runName + ".pth"
+    path = modelSavePrefix + runName # + ".pth"
     return path
 
-def model_save(model, runName):
-    path = pathFromRunName(runName)
-    torch.save(model.state_dict(), path)
+def model_save(models, runName):
+    
+    # On ne crée et utilise un dossier que si il y'a plusieurs models
+    if len(models) < 2:
+        dir_path = "./modelSave"
+    else : 
+        dir_path = pathFromRunName(runName)
+        if not os.path.exists(dir_path) :
+            os.makedirs(dir_path)
+    
+    for model in models :  
+        path = dir_path + "/" + str(model) + ".pth"
+        torch.save(model.state_dict(), path)
 
-def model_load(model, runName):
-    path = pathFromRunName(runName)
-    model.load_state_dict(torch.load(path))
-    model.eval()
-    return model
+def model_load(models, runName):
+    
+    if len(models) < 2:
+        dir_path = "./modelSave"
+    else : 
+        dir_path = pathFromRunName(runName)
+    
+    for i,model in enumerate(models) :  
+        path = dir_path + "/" + str(model) + ".pth"
+        model.load_state_dict(torch.load(path))
+        model.eval()
+        models[i] = model
+    
+    return models
 
-def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None):
-
+def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None, classify=False):
+    
     for epoch in range(epochs):
         running_loss = []
         t = tqdm(loader)
 
         for x, _ in t:
+            # x = imp.data.randomTransfo(x)
             x = x.to(device)
-
-            if alter :
-                x_prime = alter(x)
-            else : 
-                x_prime = x
-
-            x_hat = model(x_prime.cuda())
-            loss  = 0
             
-            for criterion in criterions :
-                loss += criterion(x_hat, x)
+            if alter :
+                x_preprime = transforms.Resize((64, 64))(x)
+                x_prime = alter(imp.data.normalize(x_preprime)) 
+                # x_prime = alter(imp.data.normalize(x)) 
+            else : 
+                x_prime = imp.data.normalize(x)
+            
+            if classify :
+                normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
+                classifiedImage = classif(normalized)
+                _,_,w,_ = x.shape
+                classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
+                classifPlain = simplifyChannels(classifPlain)
+                classifPlain = npToTensor(classifPlain)
+                classifPlain = classifPlain.float()
+                
+                classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
+                x = transforms.Resize((64, 64))(x)
+                
+                classifDisplay = imp.loss.generate_label(classifiedImage,w)
+                classifDisplay = classifDisplay.float()
+                classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
+                classifPlain = classifPlain.to(device)
+                
+                x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
+            else :
+                x_prime2 = x_prime
+
+            #x = imp.data.crop(x)
+            x_hat = x_prime2.cuda()
+            for model in models:
+                x_hat = model(x_hat)
+                
+            loss  = 0
+            for coef,criterion in criterions :
+                loss += criterion(x_hat, x)*coef
+                
+            #if (x[0] < 0).any() or ((x[0] > 1).any()) :
+            #    print("input pas entre 0 et 1")
+            #if (x_hat[0] < 0).any() or ((x_hat[0] > 1).any()) :
+            #    print("output pas entre 0 et 1")
 
             running_loss.append(loss.item()/len(criterions))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
+        
+        # x       = imp.data.inv_normalize(x)
+        x_prime = imp.data.inv_normalize(x_prime)
+        x_hat   = imp.data.inv_normalize(x_hat)
             
         if visuFuncs:
             for visuFunc in visuFuncs : 
                 visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
 
-def test(model, loader, alter=None, visuFuncs=None):
+def test(models, loader, alter=None, visuFuncs=None, classify=False):
     
     with torch.no_grad():
         
         running_loss = []
-        t = tqdm(loader)
-        for x, _ in t:
-            x = x.to(device)
+        x, _ = next(iter(loader))
+        x = x.to(device)
 
-            if alter :
-                x_prime = alter(x)
-            else : 
-                x_prime = x
+        if alter :
+            x_preprime = transforms.Resize((64, 64))(x)
+            x_prime = alter(imp.data.normalize(x_preprime)) 
+            # x_prime = alter(imp.data.normalize(x)) 
+        else : 
+            x_prime = imp.data.normalize(x)
 
-            x_hat = model(x_prime.cuda())
-            loss = imp.loss.perceptual_loss(x,x_hat)
-            running_loss.append(loss.item())
-            t.set_description(f'testing loss: {mean(running_loss)}')
+        if classify :
+            normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
+            classifiedImage = classif(normalized)
+            _,_,w,_ = x.shape
+            classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
+            classifPlain = simplifyChannels(classifPlain)
+            classifPlain = npToTensor(classifPlain)
+            classifPlain = classifPlain.float()
+            
+            plot = imp.utils.Visu(gridSize=8).plot_img
+            # plot(classifPlain)
+            classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
+            x = transforms.Resize((64, 64))(x)
+            
+            classifDisplay = imp.loss.generate_label(classifiedImage,w)
+            classifDisplay = classifDisplay.float()
+            classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
+            classifPlain = classifPlain.to(device)
+            plot(classifPlain)
+
+            x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
+        else :
+            x_prime2 = x_prime
+
+        x_hat = x_prime2.cuda()
+        for model in models:
+            x_hat = model(x_hat)
+        
+        # x       = imp.data.inv_normalize(x)
+        x_prime = imp.data.inv_normalize(x_prime)
+        x_hat   = imp.data.inv_normalize(x_hat)
     
         if visuFuncs:
             for visuFunc in visuFuncs : 

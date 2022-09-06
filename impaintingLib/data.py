@@ -2,39 +2,217 @@ from torchvision.datasets.folder import ImageFolder
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch
+import impaintingLib as imp
 
-sizeTrain = 12000
-sizeTest  = 1233
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-resize = (120, 120)
-crop   = (64 , 64 )
+def getSize(factor=1):
+    numWorker = 2 
+    wr,hr = resize = (120, 120)
+    wc,hc = crop = (64 , 64 )
+    batchSize = 32
+        
+    if factor < 10 : 
+        if factor > 1 :
+            numWorker = 0
+            resize = (wr*factor,hr*factor)
+            crop   = (wc*factor,hc*factor)
 
-# def downloadFaces():
-#     !wget http://vis-www.cs.umass.edu/lfw/lfw.tgz > /dev/null 2>&1
-#     !tar zxvf lfw.tgz > /dev/null 2>&1
-#     !mkdir data > /dev/null 2>&1
-#     !mv lfw data > /dev/null 2>&1
-
-def getData(path,**kwargs):
-    process = transforms.Compose(
-        [transforms.Resize(resize), 
-         transforms.CenterCrop(crop),
-         # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-         transforms.ToTensor()])
+        if factor > 3 :
+            batchSize = 16
     
+    # Si on lui passe un gros resize alors c'est qu'on voulait une taille et pas un facteur
+    else : 
+        crop = (factor,factor)
+        batchSize = 3
+        
+    return resize,crop,numWorker,batchSize
+
+def getMasks(seed=0,resize=1,test=False):
+    
+    if test:
+        path = "data/test_masks"
+    else : 
+        path = "data/masks"
+
+    _,crop,numWorker,batchSize = getSize(resize)
+    transformations = [
+         transforms.Resize(crop), 
+         transforms.ToTensor()
+        ]
+
+    g = None
+    if seed != 0 : 
+        g = torch.Generator()
+        g.manual_seed(seed)
+    
+    process = transforms.Compose(transformations)
     dataset = ImageFolder(path, process)
-    lengths = [sizeTrain, sizeTest]
-    train_set, val_set = torch.utils.data.random_split(dataset, lengths)
-    return DataLoader(train_set, **kwargs), DataLoader(val_set, **kwargs)
+    masks   = DataLoader(dataset, batch_size = batchSize,
+                                  shuffle=True, 
+                                  generator=g,
+                                  num_workers=numWorker)
+    return masks
+    
+def normalize(x):
+    transfo = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                   std =[0.229, 0.224, 0.225])
+    return transfo(x)
 
-def getFaces(batch_size=32,shuffle=True):
-    return getData(path='data/lfw', 
-                    batch_size=batch_size, 
-                    shuffle=shuffle, 
-                    num_workers=2)
+def inv_normalize(x):
+    transfo = transforms.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
+                                   std=[1/0.229, 1/0.224, 1/0.225])
+    x = x[:,:3]
+    return transfo(x)
 
-# getCeleba
-# getFacesPlusCeleba
+def getDataset(file,factorResize=1,doCrop=True,doShuffle=True):
+    resize = (120*factorResize, 120*factorResize)
+    crop   = (64*factorResize, 64*factorResize)
+    if doCrop :
+        process = transforms.Compose([
+             transforms.Resize(resize), 
+             transforms.CenterCrop(crop),
+             transforms.ToTensor()
+        ])
+    else : 
+        process = transforms.Compose([
+             transforms.Resize(crop), 
+             transforms.ToTensor()
+        ])
+    return ImageFolder(file, process)
 
-# méthodes de dataAugmentation ...
-# contraste / rotation / couleur / zoom
+def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
+    dataset = getDataset(file,factorResize,doCrop,doShuffle)
+    dataset = DataLoader(dataset, num_workers=2, batch_size=16, shuffle=doShuffle)
+    return next(iter(dataset))[0]
+
+def testReal(impainter,base=True,altered=True,segmented=False,keypoints=False,predicted=True):
+    image = getTestImages("./data/test/real",factorResize=2).to(device)
+    mask = getTestImages("./data/test/mask",factorResize=2).to(device)
+    segment  = getTestImages("./data/test/seg",factorResize=2,doCrop=False).to(device)
+
+    segment = transforms.Grayscale()(segment)
+    segment = segment * 255
+    segment = (segment / 25) - 1
+    segment = torch.round(segment)
+    segment = (segment / 9) + 0.1
+
+    mask = transforms.Grayscale()(mask)
+    n, c, h, w = image.shape
+    x_prime = torch.empty((n, c, h, w), dtype=image.dtype, device=image.device)
+    for i, (img, mask) in enumerate(zip(image, mask)):
+        propag_img = img.clone()
+        mask_bit = (mask > 0.5) * 1.
+        for j,channel in enumerate(img[:3]) :
+            propag_img[j] = channel * mask_bit
+        x_prime[i] = propag_img
+
+    x_prime2 = torch.cat((x_prime,segment),dim=1)
+    keypointLayer = imp.components.getKeypoints(image)
+    x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
+
+    with torch.no_grad():
+        image_hat = impainter(x_prime3)
+        image_hat = torch.clip(image_hat,0,1)
+        image_hat = image_hat[:,:3]
+
+    if base :
+        imp.utils.plot_img(image)
+    if altered : 
+        imp.utils.plot_img(x_prime)
+    if segmented : 
+        imp.utils.plot_img(segment)
+    if keypoints : 
+        imp.utils.plot_img(keypointLayer)
+    if predicted :
+        imp.utils.plot_img(image_hat)
+
+# ------------- DATA AUGMENTATION
+
+from PIL import Image, ImageEnhance
+import numpy as np
+import math
+import random
+
+def zoom(img,factor=0):
+    size = (width, height) = (img.size)
+
+    # Si on ne lui donne pas d'arg alors c'est aléatoire
+    if factor < 1 :
+        (mu,sigma) = (1,3)
+        factor = abs(factor)
+        factor = np.random.normal(mu, sigma)
+
+    (left, upper, right, lower) = (factor, factor, height-factor, width-factor)
+    img = img.crop((left, upper, right, lower))
+    img = img.resize(size)
+    return img
+
+def crop(img):
+    (mu,sigma) = (80,10)
+    size = img.size[0]
+    factor = np.random.normal(mu, sigma)
+    
+    transfo = transforms.Compose([transforms.CenterCrop(size*factor/100),
+                        transforms.Resize((size,size))])
+    
+    return transfo(img)
+
+def rotation(img):
+    (mu,sigma) = (1.5,1)
+    factor = np.random.normal(mu, sigma)
+    factor = abs(factor)
+    img = img.rotate(factor)
+    #img = zoom(img,20)
+    return img
+
+def mirror(img):
+    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+def enhance(img,enhancer):
+    (mu,sigma) = (1,0.3)
+    factor = np.random.normal(mu, sigma)
+    #print(factor)
+    img = enhancer.enhance(factor)
+    return img
+
+def lumi(img):
+    func = ImageEnhance.Brightness(img)
+    return enhance(img,func)
+
+def contrast(img):
+    func = ImageEnhance.Contrast(img)
+    return enhance(img,func)
+
+def color(img):
+    func = ImageEnhance.Color(img)
+    return enhance(img,func)
+
+def sharpness(img):
+    func = ImageEnhance.Sharpness(img)
+    return enhance(img,func)
+
+def randomTransfo(imgs):
+    
+    #(mu,sigma) = (1,0.15)
+    (mu,sigma) = (1.3,0.4)
+    
+    for k,img in enumerate(imgs) : 
+        img = transforms.ToPILImage()(img)
+        nbTransfo = np.random.normal(mu, sigma)
+        nbTransfo = abs(nbTransfo)
+        nbTransfo = int(nbTransfo)
+
+        #print(nbTransfo)
+        #transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
+        #transfos = [mirror, lumi, contrast, color, sharpness]
+        transfos = [crop, rotation, mirror]
+        for i in range(nbTransfo):
+            func = random.choice(transfos)
+            #print(func. __name__)
+            transfos.remove(func)
+            img = func(img)
+            
+        imgs[k] = transforms.ToTensor()(img.copy())
+    return imgs
