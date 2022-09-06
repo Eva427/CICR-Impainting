@@ -1,3 +1,0 @@
-30,save
-
-model=unetpartial loss=L1,500*perceptualAE,perceptualVGG,totalvar

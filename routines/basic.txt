@@ -1,3 +1,0 @@
-1
-
-model=autoencoder loss=L1

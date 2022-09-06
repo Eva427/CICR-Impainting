@@ -1,5 +1,0 @@
-1,test,classify,xl
-# 1,test,classify
-# 5,retrain,save,indiv,classify,medium
-
-model=unetpartialgated loss=L1,500*perceptualAE,perceptualVGG,totalvar

@@ -1,8 +1,0 @@
-1,test,seed
-# 8,retrain,save
-# 7,retrain,save,classify,indiv
-
-model=unetpartial,subpixel loss=peceptualClassifier
-model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,500*peceptualClassifier
-model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar,1000*peceptualClassifier
-model=unetpartial,subpixel loss=L1,500*perceptualAE,perceptualVGG,totalvar
