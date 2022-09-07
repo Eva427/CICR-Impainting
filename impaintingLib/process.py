@@ -8,157 +8,74 @@ from torchvision import transforms
 import numpy as np
 import impaintingLib as imp
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-classif = imp.loss.getTrainedModel()
+from torch.utils.tensorboard import SummaryWriter
 
-def pathFromRunName(runName):
-    modelSavePrefix = "./modelSave/"
-    runName = runName.replace(" ","_")
-    path = modelSavePrefix + runName # + ".pth"
-    return path
+from torch.utils.tensorboard import SummaryWriter
 
-def model_save(models, runName):
+def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, downloadFreq = 1, show_images=True, doTransfo=True, tensorboard=False):
     
-    # On ne crée et utilise un dossier que si il y'a plusieurs models
-    if len(models) < 2:
-        dir_path = "./modelSave"
-    else : 
-        dir_path = pathFromRunName(runName)
-        if not os.path.exists(dir_path) :
-            os.makedirs(dir_path)
+    net.train()
+    accum_iter = 100 
+    lrs = []
+    current_lr = optimizer.param_groups[0]["lr"]
+    lambda1 = lambda epoch: 0.67 ** epoch
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
     
-    for model in models :  
-        path = dir_path + "/" + str(model) + ".pth"
-        torch.save(model.state_dict(), path)
-
-def model_load(models, runName):
+    t1 = tqdm(range(epochs), desc=f"Training progress", colour="#00ff00")
     
-    if len(models) < 2:
-        dir_path = "./modelSave"
-    else : 
-        dir_path = pathFromRunName(runName)
-    
-    for i,model in enumerate(models) :  
-        path = dir_path + "/" + str(model) + ".pth"
-        model.load_state_dict(torch.load(path))
-        model.eval()
-        models[i] = model
-    
-    return models
-
-def train(models, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None, classify=False):
-    
-    for epoch in range(epochs):
+    for epoch in t1:
         running_loss = []
-        t = tqdm(loader)
+        t2 = tqdm(loader, leave=False, colour="#005500") 
 
-        for x, _ in t:
-            # x = imp.data.randomTransfo(x)
+        for batch_idx,(x,_) in enumerate(t2):
             x = x.to(device)
+            x_prime = alter(x)
             
-            if alter :
-                x_preprime = transforms.Resize((64, 64))(x)
-                x_prime = alter(imp.data.normalize(x_preprime)) 
-                # x_prime = alter(imp.data.normalize(x)) 
-            else : 
-                x_prime = imp.data.normalize(x)
+            if 
+            x = imp.data.randomTransfo(x)
             
-            if classify :
-                normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
-                classifiedImage = classif(normalized)
-                _,_,w,_ = x.shape
-                classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
-                classifPlain = simplifyChannels(classifPlain)
-                classifPlain = npToTensor(classifPlain)
-                classifPlain = classifPlain.float()
-                
-                classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
-                x = transforms.Resize((64, 64))(x)
-                
-                classifDisplay = imp.loss.generate_label(classifiedImage,w)
-                classifDisplay = classifDisplay.float()
-                classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
-                classifPlain = classifPlain.to(device)
-                
-                x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
-            else :
-                x_prime2 = x_prime
+            with torch.set_grad_enabled(True):
+                segmented = imp.components.get_segmentation(x, simplify=simplify_seg, scale_factor=scale_factor)
+                x_input = torch.cat((x_prime, segmented),dim=1)
+                keypointLayer = imp.components.getKeypoints(x)
+                x_input = torch.cat((x_input, keypointLayer),dim=1)
 
-            #x = imp.data.crop(x)
-            x_hat = x_prime2.cuda()
-            for model in models:
-                x_hat = model(x_hat)
-                
-            loss  = 0
-            for coef,criterion in criterions :
-                loss += criterion(x_hat, x)*coef
-                
-            #if (x[0] < 0).any() or ((x[0] > 1).any()) :
-            #    print("input pas entre 0 et 1")
-            #if (x_hat[0] < 0).any() or ((x_hat[0] > 1).any()) :
-            #    print("output pas entre 0 et 1")
+                outputs = net(x_input)
 
-            running_loss.append(loss.item()/len(criterions))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
+                loss = 1e-5
+                loss += torch.nn.L1Loss()(outputs, x)
+                loss += imp.loss.perceptualVGG(outputs, x)
+                loss += imp.loss.totalVariation(outputs, x)
+                loss /= accum_iter
+
+                running_loss.append(loss.item())
+                loss.backward()
+
+                if ((batch_idx + 1) % accum_iter == 0) or (batch_idx + 1 == len(t2)):
+                    optimizer.step()
+                    optimizer.zero_grad()
+                
+                t2.set_description(f'Epoch {epoch}, training loss: {mean(running_loss)}, LR : {current_lr}, epoch {epoch + 1}/{epochs}')
+                
+        current_lr = optimizer.param_groups[0]["lr"]
+        lrs.append(current_lr)
+        scheduler.step()
+                
+        t1.set_description(f'Epoch {epoch + 1}/{epochs}, LR : {current_lr}')
+            
+        if show_images:
+            imp.utils.plot_img(x[:8])
+            imp.utils.plot_img(x_prime[:8])
+            imp.utils.plot_img(segmented[:8])
+            imp.utils.plot_img(torch.clip(outputs[:8], 0, 1))
+            imp.utils.plot_img(keypointLayer[:8])
+            
+        if tensorboard
+        writer = SummaryWriter("runs/" + runName)
+        writer.add_scalar("training loss", mean(running_loss), epoch)
+        writer.add_image("Original",make_grid(x[:8]))
+        writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
+        writer.close()
         
-        # x       = imp.data.inv_normalize(x)
-        x_prime = imp.data.inv_normalize(x_prime)
-        x_hat   = imp.data.inv_normalize(x_hat)
-            
-        if visuFuncs:
-            for visuFunc in visuFuncs : 
-                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
-
-def test(models, loader, alter=None, visuFuncs=None, classify=False):
-    
-    with torch.no_grad():
-        
-        running_loss = []
-        x, _ = next(iter(loader))
-        x = x.to(device)
-
-        if alter :
-            x_preprime = transforms.Resize((64, 64))(x)
-            x_prime = alter(imp.data.normalize(x_preprime)) 
-            # x_prime = alter(imp.data.normalize(x)) 
-        else : 
-            x_prime = imp.data.normalize(x)
-
-        if classify :
-            normalized = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
-            classifiedImage = classif(normalized)
-            _,_,w,_ = x.shape
-            classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
-            classifPlain = simplifyChannels(classifPlain)
-            classifPlain = npToTensor(classifPlain)
-            classifPlain = classifPlain.float()
-            
-            plot = imp.utils.Visu(gridSize=8).plot_img
-            # plot(classifPlain)
-            classifPlain = torch.nn.functional.avg_pool2d(classifPlain, 4, stride=4)
-            x = transforms.Resize((64, 64))(x)
-            
-            classifDisplay = imp.loss.generate_label(classifiedImage,w)
-            classifDisplay = classifDisplay.float()
-            classifPlain = torch.nn.functional.avg_pool2d(classifDisplay, 4, stride=4)
-            classifPlain = classifPlain.to(device)
-            plot(classifPlain)
-
-            x_prime2 = torch.cat((x_prime,classifPlain),dim=1)
-        else :
-            x_prime2 = x_prime
-
-        x_hat = x_prime2.cuda()
-        for model in models:
-            x_hat = model(x_hat)
-        
-        # x       = imp.data.inv_normalize(x)
-        x_prime = imp.data.inv_normalize(x_prime)
-        x_hat   = imp.data.inv_normalize(x_hat)
-    
-        if visuFuncs:
-            for visuFunc in visuFuncs : 
-                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=0, running_loss=running_loss)
+        if (epoch % downloadFreq) == 0 : 
+            torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))

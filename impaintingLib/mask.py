@@ -60,6 +60,12 @@ class Alter :
         imgs_masked = propagate(imgs,masks)
         return imgs_masked
     
+    def fullMask(self,imgs):
+        n, c, h, w = imgs.shape
+        masks = torch.full((n, 1, h, w),1, dtype=imgs.dtype, device=imgs.device)
+        imgs_masked = propagate(imgs,masks)
+        return imgs_masked
+    
     def downScale(self,imgs, scale_factor=2, upscale=True):
         imgs_low = torch.nn.MaxPool2d(kernel_size=scale_factor)(imgs)
         if upscale:
