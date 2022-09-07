@@ -33,12 +33,10 @@ def npToTensor(x):
 def get_segmentation(x, segmenter=classif, scale_factor=4, simplify=True):
     n,c,w,h = x.shape
     with torch.no_grad():
-        if scale_factor > 0 :
-            x = torch.nn.functional.interpolate(x, scale_factor=scale_factor)
+        x = torch.nn.functional.interpolate(x, scale_factor=scale_factor)
         x = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(x)
         y = classif(x)
-        if scale_factor > 0 :
-            y = torch.nn.functional.avg_pool2d(y, scale_factor)
+        y = torch.nn.functional.avg_pool2d(y, scale_factor)
             
     y = imp.loss.generate_label_plain(y,w)
     if simplify: 
