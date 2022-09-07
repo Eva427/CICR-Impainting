@@ -25,8 +25,3 @@ echo 'Downloading nvidia mask testing dataset ... '
 wget https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip
 unzip test_mask.zip
 mv mask data/test_masks
-
-echo 'Downloading nvidia mask training dataset ... '
-wget https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip
-unzip irregular_mask.zip
-mv irregular_mask data/mask
