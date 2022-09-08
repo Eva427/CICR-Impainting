@@ -23,14 +23,32 @@
 
             <!-- Colonne 1 -->
             <div class="col">
-                <div class="reglageCommun">
-                    <button class="btn btn-danger" id="clearMask" type="button">Clear</button>
-                    <button class="btn btn-warning" id="undoMask" type="button">Undo</button>
-                    <input type="range" id="sizeMask" name="sizeMask" min="1" max="20">
-                </div>
+
                 <div>
-                    <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
                     <input type="file" id="inputFile" name="inputFile" accept="image/png, image/jpeg">
+
+                    <div>
+                        <button class="btn btn-secondary" id="btnCrop" type="button">Crop</button>
+                        <button class="btn btn-warning" id="btnRestore" type="button">Restore</button>
+                    </div>
+
+                    <div>
+                        <canvas id="canvasCrop"></canvas>
+                    </div>
+                </div>
+
+                <a href="#collapseMask" data-bs-toggle="collapse">
+                    <button type="button" class="btn btn-primary">Mask</button>
+                </a>
+                <div id="collapseMask" class="collapse">
+                    <div class="reglageCommun">
+                        <button class="btn btn-danger" id="clearMask" type="button">Clear</button>
+                        <button class="btn btn-warning" id="undoMask" type="button">Undo</button>
+                        <input type="range" id="sizeMask" name="sizeMask" min="1" max="20">
+                    </div>
+                    <div>
+                        <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
+                    </div>
                 </div>
             </div>
 
