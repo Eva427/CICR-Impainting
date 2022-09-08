@@ -9,6 +9,7 @@ from PIL import Image, ImageChops
 from datetime import datetime
 import json
 
+import impaintingLib as imp
 from impaintingLib.model import keypoint
 
 # ---------------
@@ -33,18 +34,6 @@ classifier_weight_path = "./modelSave/classifierUNet.pth"
 classif = imp.model.ClassifierUNet()
 classif.load_state_dict(torch.load(classifier_weight_path,map_location=device))
 classif.eval()
-
-# Enhancer
-enhancer_weight_path = './modelSave/RRDB_ESRGAN_x4.pth'
-enhancer = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
-enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=device))
-enhancer.eval()
-
-# Keypoints
-keypoint_weight_path = "./modelSave/keypoint.pth"
-keypointModel = imp.model.XceptionNet()
-keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=device))
-keypointModel.eval()
 
 # ---------------
 
@@ -71,25 +60,6 @@ def convertImage(image,doCrop=True):
     image = image.view(1,c,w,h)
     return image
 
-def simplifyChannels(x):
-    x = np.where(x == 3, 0, x) 
-    x = np.where(x == 4, 3, x) 
-    x = np.where(x == 5, 3, x) 
-    x = np.where(x == 6, 4, x) 
-    x = np.where(x == 7, 4, x) 
-    x = np.where(x == 8, 5, x) 
-    x = np.where(x == 9, 5, x) 
-    x = np.where(x == 10 , 6, x) 
-    x = np.where(x == 11, 7, x) 
-    x = np.where(x == 12, 7, x)  
-    x = np.where(x > 12, 0, x) 
-    return x
-
-def npToTensor(x):
-    x = torch.from_numpy(x)
-    x = x.float()
-    return x
-
 def segment(image):
     with torch.no_grad():
         if scale_factor > 0 :
@@ -99,45 +69,11 @@ def segment(image):
         # classifiedImage = torch.nn.functional.avg_pool2d(classifiedImage, scale_factor)
         _,_,w,_ = classifiedImage.shape
         classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
-        classifPlain = simplifyChannels(classifPlain)
-        # classifPlain = npToTensor(classifPlain)
+        classifPlain = imp.components.simplifyChannels(classifPlain)
         classifPlain = (classifPlain + 1) * 25
         classifPlain = classifPlain.astype(np.uint8)
         pil_image = Image.fromarray(classifPlain[0])
     return pil_image
-
-def addKeypoints(images_list, landmarks_list):
-    n,_,w,h = images_list.shape
-    layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
-    for i,landmarks in enumerate(landmarks_list):
-        layer = torch.empty((1, w, h), dtype=images_list.dtype, device=images_list.device).fill_(0.1)
-        for x,y in landmarks:
-            x = int(x.item()) - 1
-            y = int(y.item()) - 1
-            layer[0][y][x] = 1
-        layers[i] = layer
-    return layers
-
-def getLandmarks(x):
-    x = transforms.Grayscale()(x)
-    keypoint_list = []
-    with torch.no_grad():
-        keypoints = keypointModel(x)
-        _,_,w,_ = x.shape
-        image_dim = w
-        for landmarks in keypoints:
-            landmarks = landmarks.view(-1, 2)
-            landmarks = (landmarks + 0.5) * image_dim
-            landmarks = landmarks.cpu().detach().numpy().tolist()
-            landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
-            landmarks = torch.from_numpy(landmarks)
-            keypoint_list.append(landmarks)
-    return keypoint_list
-
-def getKeypoints(x, model=keypointModel):
-    keypoints = getLandmarks(x)
-    layers = addKeypoints(x, keypoints)
-    return layers
 
 def impaint(mask,segmented,enhance,keypoints,modelOpt):
     image = Image.open("./impaintingWeb/static/image/original.jpg")
@@ -150,17 +86,11 @@ def impaint(mask,segmented,enhance,keypoints,modelOpt):
     segmented = torch.round(segmented)
     segmented = (segmented / 9) + 0.1
 
-    n, c, h, w = image.shape
-    x_prime = torch.empty((n, c, h, w), dtype=image.dtype, device=image.device)
-    for i, (img, mask) in enumerate(zip(image, mask)):
-        propag_img = img.clone()
-        mask_bit = (mask > 0.5) * 1.
-        for j,channel in enumerate(img[:3]) :
-            propag_img[j] = channel * mask_bit
-        x_prime[i] = propag_img
+    mask = (mask < 0.5) * 1.
+    x_prime = imp.mask.propagate(image,mask)
 
     x_prime2 = torch.cat((x_prime,segmented),dim=1)
-    keypointLayer = addKeypoints(image, keypoints)
+    keypointLayer = imp.components.addKeypoints(image, keypoints)
     x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
 
     with torch.no_grad():
@@ -173,7 +103,7 @@ def impaint(mask,segmented,enhance,keypoints,modelOpt):
             
         image_hat = torch.clip(image_hat,0,1)[:,:3]
         if enhance : 
-            image_hat = enhancer(image_hat)
+            image_hat = imp.components.superRes(image_hat)
 
     image_hat = transforms.ToPILImage()(image_hat[0])
     return image_hat
@@ -199,7 +129,7 @@ async def segmentPOST():
     segmented = segment(original_crop)
     segmented.save("./impaintingWeb/static/image/mask.jpg")
 
-    keypoints = getLandmarks(original_crop)[0]
+    keypoints = imp.components.getLandmarks(original_crop)[0]
     keypoints = keypoints.tolist()
 
     original_crop = transforms.ToPILImage()(original_crop[0])
