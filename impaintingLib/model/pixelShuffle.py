@@ -1,11 +1,12 @@
 import torch.nn as nn
 
 class SubPixelNetwork(nn.Module):
-    def __init__(self, upscale_factor=1):
+    def __init__(self, in_channels=4, upscale_factor=1):
         super(SubPixelNetwork, self).__init__()
+        self.upscale_factor = upscale_factor
 
         self.relu = nn.ReLU()
-        self.conv1 = nn.Conv2d(3, 64, (5, 5), (1, 1), (2, 2))
+        self.conv1 = nn.Conv2d(in_channels, 64, (5, 5), (1, 1), (2, 2))
         self.conv2 = nn.Conv2d(64, 64, (3, 3), (1, 1), (1, 1))
         self.conv3 = nn.Conv2d(64, 32, (3, 3), (1, 1), (1, 1))
         self.conv4 = nn.Conv2d(32, (upscale_factor ** 2)*3, (3, 3), (1, 1), (1, 1))
@@ -21,3 +22,6 @@ class SubPixelNetwork(nn.Module):
         x = self.relu(self.conv3(x))
         x = self.pixel_shuffle(self.conv4(x))
         return x
+    
+    def __str__(self):
+        return("PixelShuffle{}".format(self.upscale_factor))

@@ -1,4 +1,0 @@
-2
-
-model=unet loss=L1,perceptual
-model=unetpartial loss=L1,perceptual

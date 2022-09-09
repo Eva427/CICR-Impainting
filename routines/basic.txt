@@ -1,6 +1,0 @@
-1
-
-model=autoencode loss=L1
-model=unet loss=L1
-model=unetpartial loss=L1
-model=subpixel loss=L1

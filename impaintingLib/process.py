@@ -2,76 +2,80 @@ import torch
 from statistics import mean
 from tqdm.notebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
+import os
+from torchvision import transforms
 
+import numpy as np
 import impaintingLib as imp
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+from torch.utils.tensorboard import SummaryWriter
 
-def pathFromRunName(runName):
-    modelSavePrefix = "./modelSave/"
-    runName = runName.replace(" ","_")
-    path = modelSavePrefix + runName + ".pth"
-    return path
+from torch.utils.tensorboard import SummaryWriter
 
-def model_save(model, runName):
-    path = pathFromRunName(runName)
-    torch.save(model.state_dict(), path)
-
-def model_load(model, runName):
-    path = pathFromRunName(runName)
-    model.load_state_dict(torch.load(path))
-    model.eval()
-    return model
-
-def train(model, optimizer, loader, criterions, epochs=5, alter=None, visuFuncs=None):
-
-    for epoch in range(epochs):
-        running_loss = []
-        t = tqdm(loader)
-
-        for x, _ in t:
-            x = x.to(device)
-
-            if alter :
-                x_prime = alter(x)
-            else : 
-                x_prime = x
-
-            x_hat = model(x_prime.cuda())
-            loss  = 0
-            
-            for criterion in criterions :
-                loss += criterion(x_hat, x)
-
-            running_loss.append(loss.item()/len(criterions))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            t.set_description(f'training loss: {mean(running_loss)}, epoch = {epoch}/{epochs}')
-            
-        if visuFuncs:
-            for visuFunc in visuFuncs : 
-                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=epoch, running_loss=running_loss)
-
-def test(model, loader, alter=None, visuFuncs=None):
+def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, downloadFreq = 1, show_images=True, doTransfo=True, tensorboard=False):
     
-    with torch.no_grad():
+    net.train()
+    accum_iter = 100 
+    lrs = []
+    current_lr = optimizer.param_groups[0]["lr"]
+    lambda1 = lambda epoch: 0.67 ** epoch
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
+    
+    t1 = tqdm(range(epochs), desc=f"Training progress", colour="#00ff00")
+    
+    for epoch in t1:
+        running_loss = []
+        t2 = tqdm(loader, leave=False, colour="#005500") 
+
+        for batch_idx,(x,_) in enumerate(t2):
+            x = x.to(device)
+            x_prime = alter(x)
+            
+            if 
+            x = imp.data.randomTransfo(x)
+            
+            with torch.set_grad_enabled(True):
+                segmented = imp.components.get_segmentation(x, simplify=simplify_seg, scale_factor=scale_factor)
+                x_input = torch.cat((x_prime, segmented),dim=1)
+                keypointLayer = imp.components.getKeypoints(x)
+                x_input = torch.cat((x_input, keypointLayer),dim=1)
+
+                outputs = net(x_input)
+
+                loss = 1e-5
+                loss += torch.nn.L1Loss()(outputs, x)
+                loss += imp.loss.perceptualVGG(outputs, x)
+                loss += imp.loss.totalVariation(outputs, x)
+                loss /= accum_iter
+
+                running_loss.append(loss.item())
+                loss.backward()
+
+                if ((batch_idx + 1) % accum_iter == 0) or (batch_idx + 1 == len(t2)):
+                    optimizer.step()
+                    optimizer.zero_grad()
+                
+                t2.set_description(f'Epoch {epoch}, training loss: {mean(running_loss)}, LR : {current_lr}, epoch {epoch + 1}/{epochs}')
+                
+        current_lr = optimizer.param_groups[0]["lr"]
+        lrs.append(current_lr)
+        scheduler.step()
+                
+        t1.set_description(f'Epoch {epoch + 1}/{epochs}, LR : {current_lr}')
+            
+        if show_images:
+            imp.utils.plot_img(x[:8])
+            imp.utils.plot_img(x_prime[:8])
+            imp.utils.plot_img(segmented[:8])
+            imp.utils.plot_img(torch.clip(outputs[:8], 0, 1))
+            imp.utils.plot_img(keypointLayer[:8])
+            
+        if tensorboard
+        writer = SummaryWriter("runs/" + runName)
+        writer.add_scalar("training loss", mean(running_loss), epoch)
+        writer.add_image("Original",make_grid(x[:8]))
+        writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
+        writer.close()
         
-        running_loss = []
-        t = tqdm(loader)
-        for x, _ in t:
-            x = x.to(device)
-
-            if alter :
-                x_prime = alter(x)
-            else : 
-                x_prime = x
-
-            x_hat = model(x_prime.cuda())
-            loss = imp.loss.perceptual_loss(x,x_hat)
-            running_loss.append(loss.item())
-            t.set_description(f'testing loss: {mean(running_loss)}')
-    
-        if visuFuncs:
-            for visuFunc in visuFuncs : 
-                visuFunc(x=x, x_prime=x_prime, x_hat=x_hat, epoch=0, running_loss=running_loss)
+        if (epoch % downloadFreq) == 0 : 
+            torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))
