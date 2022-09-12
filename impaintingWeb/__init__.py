@@ -37,10 +37,10 @@ classif.eval()
 
 # ---------------
 
+resize = (120*factorResize, 120*factorResize) # Default one 
 
 def convertImage(image,doCrop=True):
     w,h = image.size
-    resize = (120*factorResize, 120*factorResize)
     crop   = (64*factorResize, 64*factorResize)
 
     if doCrop : 
@@ -112,7 +112,7 @@ def impaint(mask,segmented,enhance,keypoints,modelOpt):
 
 @impBP.route("/")
 async def home():
-    return await render_template('home.html')
+    return await render_template('homeImp.html')
 
 # Recevoir l'image encodé en Base 64
 # Générer la segmentation et croper/resizer au bon format
@@ -122,6 +122,11 @@ async def home():
 async def segmentPOST():
     ask        = await request.form
     dataB64    = ask["imgB64"]
+    size       = int(ask["size"])
+
+    global resize
+    resize = (size*factorResize, size*factorResize)
+
     img = Image.open(BytesIO(base64.b64decode(dataB64))).convert('RGB')
     img.save("./impaintingWeb/static/image/original.jpg")
     
