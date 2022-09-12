@@ -64,6 +64,11 @@ var resetKeypoints = function(keypoints) {
     addAllKeypoints(keypoints);
 }
 
+var removeKeypoints = function() {
+    layer2.destroyChildren();
+    pointList = [];
+}
+
 // addAllKeypoints(keypoints);
 // console.log(pointList);
 
