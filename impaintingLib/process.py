@@ -64,11 +64,11 @@ def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, losses, 
             imp.utils.plot_img(torch.clip(outputs[:8], 0, 1))
             imp.utils.plot_img(keypointLayer[:8])
             
-        writer = SummaryWriter("runs/" + runName)
-        writer.add_scalar("training loss", mean(running_loss), epoch)
-        writer.add_image("Original",make_grid(x[:8]))
-        writer.add_image("Mask",make_grid(x_prime[:8]))
-        writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
-        writer.close()
+        # writer = SummaryWriter("runs/" + runName)
+        # writer.add_scalar("training loss", mean(running_loss), epoch)
+        # writer.add_image("Original",make_grid(x[:8]))
+        # writer.add_image("Mask",make_grid(x_prime[:8]))
+        # writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
+        # writer.close()
         
         torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))

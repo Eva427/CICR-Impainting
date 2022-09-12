@@ -31,12 +31,16 @@ a:link {
     margin-top: 10px;
 }
 
-#enhanceContainer>*,
+.optContainer,
 canvas {
     margin: 10px;
 }
 
-#enhanceContainer,
+.optContainer div div input{
+    margin-right: 5px;
+}
+
+.optContainer div,
 #reglageCommun {
     display: flex;
     justify-content: center;

@@ -2,6 +2,7 @@ inputFile = document.getElementById('inputFile')
 tempImg = document.getElementById('tempImg')
 predictImg = document.getElementById('predictImg')
 enhance = document.getElementById('enhance')
+bg = document.getElementById('bg')
 resize = document.getElementById('resize')
 updateResize = document.getElementById('updateResize')
 
@@ -48,8 +49,8 @@ $('#inputFile').change(function(e) {
                 imgBack = new Image();
                 imgMiddle = new Image();
 
-                imgBack.src = "./static/image/mask.jpg" + queryString;
-                imgMiddle.src = "./static/image/original_crop.jpg" + queryString;
+                imgBack.src = "./static/image/mask.png" + queryString;
+                imgMiddle.src = "./static/image/original_crop.png" + queryString;
 
                 imgBack.onload = function() {
                     imgMiddle.onload = function() {
@@ -76,7 +77,7 @@ $('#inputFile').change(function(e) {
                 };
 
                 // Keypoints
-                imageObj.src = "./static/image/original_crop.jpg" + queryString;
+                imageObj.src = "./static/image/original_crop.png" + queryString;
                 firstKeypoints = response["keypoints"]
                 removeKeypoints()
                 addAllKeypoints(response["keypoints"]);
@@ -86,12 +87,15 @@ $('#inputFile').change(function(e) {
     clearCanvasMask();
 });
 
+var resizeValue = resize.value;
+
 $('#updateResize').mousedown(function(e) {
 
     var dataURL = canvasBackMask.toDataURL("image/png");
     dataURL = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+    resizeValue = resize.value;
 
-    $.post('/imp/segment', { "imgB64": dataURL, "size": resize.value}).done(function(response) {
+    $.post('/imp/segment', { "imgB64": dataURL, "size": resizeValue}).done(function(response) {
         if (response) {
             var timestamp = new Date().getTime();
             var queryString = "?t=" + timestamp; // permet de refresh le src automatiquement
@@ -99,8 +103,8 @@ $('#updateResize').mousedown(function(e) {
             imgBack = new Image();
             imgMiddle = new Image();
 
-            imgBack.src = "./static/image/mask.jpg" + queryString;
-            imgMiddle.src = "./static/image/original_crop.jpg" + queryString;
+            imgBack.src = "./static/image/mask.png" + queryString;
+            imgMiddle.src = "./static/image/original_crop.png" + queryString;
 
             imgBack.onload = function() {
                 imgMiddle.onload = function() {
@@ -127,7 +131,7 @@ $('#updateResize').mousedown(function(e) {
             };
 
             // Keypoints
-            imageObj.src = "./static/image/original_crop.jpg" + queryString;
+            imageObj.src = "./static/image/original_crop.png" + queryString;
             firstKeypoints = response["keypoints"]
             removeKeypoints()
             addAllKeypoints(response["keypoints"]);
@@ -149,13 +153,15 @@ $('#predict').mousedown(function(e) {
         "maskB64": maskB64,
         "segmentB64": segmentB64,
         "doEnhance": enhance.checked,
+        "doRemoveBg": bg.checked,
         "keypoints": JSON.stringify(getAllKeypoints()),
-        "modelOpt": document.querySelector('input[name="modelOption"]:checked').value
+        "modelOpt": document.querySelector('input[name="modelOption"]:checked').value, 
+        "size": resizeValue
     }).done(function(response) {
         loading.style.visibility = "hidden";
         var timestamp = new Date().getTime();
         var queryString = "?t=" + timestamp;
-        predictPath = "./static/image/predict.jpg" + queryString;
+        predictPath = "./static/image/predict.png" + queryString;
         predictImg.src = predictPath;
     });
 });
@@ -179,12 +185,12 @@ $('#download').mousedown(function(e) {
         var link = document.createElement('a');
         document.body.appendChild(link);
 
-        link.href = url + "mask.jpg";
-        link.download = filename + "_mask.jpg";
+        link.href = url + "mask.png";
+        link.download = filename + "_mask.png";
         link.click();
 
-        link.href = url + "seg.jpg";
-        link.download = filename + "_seg.jpg";
+        link.href = url + "seg.png";
+        link.download = filename + "_seg.png";
         link.click();
 
         document.body.removeChild(link);

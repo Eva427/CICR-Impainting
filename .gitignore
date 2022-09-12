@@ -126,8 +126,11 @@ dmypy.json
 
 # Custom ignore
 runs/
+impaintingWeb/static/image/*.png
 impaintingWeb/static/image/*.jpg
 impaintingWeb/static/image/downloaded/*.jpg
+impaintingWeb/static/image/downloaded/*.png
 data/*
 !data/test
 pistesRecherche/*
+modelSave/bg
