@@ -8,11 +8,9 @@ from torchvision import transforms
 import numpy as np
 import impaintingLib as imp
 
-from torch.utils.tensorboard import SummaryWriter
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-from torch.utils.tensorboard import SummaryWriter
-
-def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, downloadFreq = 1, show_images=True, doTransfo=True, tensorboard=False):
+def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, show_images=True, summary=True):
     
     net.train()
     accum_iter = 100 
@@ -29,10 +27,8 @@ def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName=
 
         for batch_idx,(x,_) in enumerate(t2):
             x = x.to(device)
+            #x = imp.data.randomTransfo(x)
             x_prime = alter(x)
-            
-            if 
-            x = imp.data.randomTransfo(x)
             
             with torch.set_grad_enabled(True):
                 segmented = imp.components.get_segmentation(x, simplify=simplify_seg, scale_factor=scale_factor)
@@ -43,9 +39,8 @@ def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName=
                 outputs = net(x_input)
 
                 loss = 1e-5
-                loss += torch.nn.L1Loss()(outputs, x)
-                loss += imp.loss.perceptualVGG(outputs, x)
-                loss += imp.loss.totalVariation(outputs, x)
+                for criterion,coef in losses : 
+                    loss += criterion(outputs, x)*coef
                 loss /= accum_iter
 
                 running_loss.append(loss.item())
@@ -70,12 +65,12 @@ def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, runName=
             imp.utils.plot_img(torch.clip(outputs[:8], 0, 1))
             imp.utils.plot_img(keypointLayer[:8])
             
-        if tensorboard
-        writer = SummaryWriter("runs/" + runName)
-        writer.add_scalar("training loss", mean(running_loss), epoch)
-        writer.add_image("Original",make_grid(x[:8]))
-        writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
-        writer.close()
+        if summary:
+            writer = SummaryWriter("runs/" + runName)
+            writer.add_scalar("training loss", mean(running_loss), epoch)
+            writer.add_image("Original",make_grid(x[:8]))
+            writer.add_image("Mask",make_grid(x_prime[:8]))
+            writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
+            writer.close()
         
-        if (epoch % downloadFreq) == 0 : 
-            torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))
+        torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))
