@@ -19,7 +19,7 @@ echo 'Downloading utk dataset ... '
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=0BxYys69jI14kYVM3aVhKS1VhRUk' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=0BxYys69jI14kYVM3aVhKS1VhRUk" -O utk.tar.gz && rm -rf /tmp/cookies.txt
 tar xvzf utk.tar.gz
 mkdir -p data/utkface/utkface
-mv UTKFace/ data/utkface/utkface
+mv UTKFace/ data/utkf/utkface
 
 echo 'Downloading nvidia mask testing dataset ... '
 wget https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip

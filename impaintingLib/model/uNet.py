@@ -84,7 +84,7 @@ class UpSampleBlock(nn.Module):
     
 class UNet(nn.Module) : 
         
-    def __init__(self, in_channels=4,out_channels=3, netType="default", convType="conv2d"):
+    def __init__(self, in_channels=4,out_channels=3, netType="default", convType="conv2d",doubleLayer=False):
         super().__init__()
                                              
         self.downsample_block_1 = DownSampleBlock(in_channels, 64, netType, convType)
@@ -97,6 +97,13 @@ class UNet(nn.Module) :
         
         self.netType = netType
         self.convType = convType
+        self.doubleLayer = doubleLayer
+        
+        if self.doubleLayer : 
+            self.downsample_block_1_interm = DownSampleBlock(64, 64, netType, convType)
+            self.downsample_block_2_interm = DownSampleBlock(128, 128, netType, convType)
+            self.upsample_block_2_interm = UpSampleBlock(128 + 256, 128 + 256, netType, convType)
+            self.upsample_block_1_interm = UpSampleBlock(128 + 64, 128 + 64, netType, convType)
         
         if "conv2d" in self.convType :
             self.last_conv = nn.Conv2d(64, out_channels, 1)
@@ -114,12 +121,23 @@ class UNet(nn.Module) :
             m = None
             
         x, m, x_skip1, m_skip1 = self.downsample_block_1(x, m)
+        if self.doubleLayer : 
+            x, m, x_skip1_interm, m_skip1_interm = self.downsample_block_1_interm(x, m)
+            
         x, m, x_skip2, m_skip2 = self.downsample_block_2(x, m)
+        if self.doubleLayer : 
+            x, m, x_skip2_interm, m_skip2_interm = self.downsample_block_2_interm(x, m)
         
         x, m = self.middle_conv_block(x, m)
         
+        if self.doubleLayer : 
+            x, m = self.upsample_block_2_interm(x, m, x_skip2_interm, m_skip2_interm) 
         x, m = self.upsample_block_2(x, m, x_skip2, m_skip2) 
+        
+        if self.doubleLayer : 
+            x, m = self.upsample_block_1_interm(x, m, x_skip1_interm, m_skip1_interm)
         x, m = self.upsample_block_1(x, m, x_skip1, m_skip1)
+        
         
         out = self.last_conv(x)
         return out
