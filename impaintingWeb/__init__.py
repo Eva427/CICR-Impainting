@@ -45,10 +45,19 @@ bgRemove.eval()
 
 resize = (120*factorResize, 120*factorResize) # Default one 
 
-def convertImage(image,resize=None):
+def convertImage(image,resize=None,transparentFill=False):
     w,h = image.size
-    crop   = (64*factorResize, 64*factorResize)
+    maxs = max(w,h)
 
+    if w != h : 
+        filling = (255,255,255)
+        if transparentFill :
+            filling = 255
+        result = Image.new(image.mode, (maxs, maxs), filling)
+        result.paste(image, ((maxs-w)//2, (maxs-h)//2))
+        image = result
+
+    crop   = (64*factorResize, 64*factorResize)
     if resize : 
         process = transforms.Compose([
             transforms.Resize(resize), 
@@ -60,7 +69,6 @@ def convertImage(image,resize=None):
             transforms.Resize(crop), 
             transforms.ToTensor()
     ])
-
     image = process(image)
     c,w,h = image.shape
     image = image.view(1,c,w,h)
@@ -120,7 +128,7 @@ def remove_background(input_image):
 def impaint(mask,segmented,enhance,removeBg,keypoints,modelOpt,resize):
     image = Image.open("./impaintingWeb/static/image/original.png")
     image   = convertImage(image,resize)
-    mask    = convertImage(mask,resize)
+    mask    = convertImage(mask,resize,transparentFill=True)
     segmented = convertImage(segmented)
 
     segmented = segmented * 255
