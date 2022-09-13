@@ -23,15 +23,26 @@
 
             <!-- Colonne 1 -->
             <div class="col">
-                <div class="reglageCommun">
+
+                <div id="reglageResizing">
+                    <label for="resize">Image's resizing</label>
+                    <div>
+                        <input type="range" id="resize" name="resize" min="64" max="240" value="120">
+                        <button class="btn btn-danger" id="updateResize" type="button">Update Resize</button>
+                    </div>
+                    <hr>
+                </div>
+
+                <div id="reglageCommun">
                     <button class="btn btn-danger" id="clearMask" type="button">Clear</button>
                     <button class="btn btn-warning" id="undoMask" type="button">Undo</button>
                     <input type="range" id="sizeMask" name="sizeMask" min="1" max="20">
                 </div>
                 <div>
                     <canvas id="canvasMask" width="256px" height="256px" style="border:1px solid blue"></canvas>
-                    <input type="file" id="inputFile" name="inputFile" accept="image/png, image/jpeg">
                 </div>
+
+                <input type="file" id="inputFile" name="inputFile" accept="image/png, image/jpeg">
             </div>
 
             <!-- Colonne 2 -->
@@ -98,10 +109,19 @@
 
                 <img id="predictImg" width="300px">
                 <button class="btn btn-success" id="predict" type="button">Predict</button>
-                <div id="enhanceContainer">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="enhance">
-                        <label class="form-check-label" for="enhance">Enhance</label>
+
+                <div class="optContainer">
+                    <div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="bg" checked>
+                            <label class="form-check-label" for="bg">Remove BG</label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enhance">
+                            <label class="form-check-label" for="enhance">Enhance</label>
+                        </div>
                     </div>
                 </div>
                 <img src="./static/image/loading.gif" alt="loading" width="80px" id="loading" />

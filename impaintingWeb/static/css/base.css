@@ -10,6 +10,13 @@ a:link {
     margin: 5%;
 }
 
+#reglageResizing{
+    margin-bottom:20px;
+}
+#reglageResizing>label{
+    margin-bottom:6px;
+}
+
 #brushColor>div {
     margin: 10px;
 }
@@ -24,19 +31,23 @@ a:link {
     margin-top: 10px;
 }
 
-#enhanceContainer>*,
+.optContainer,
 canvas {
     margin: 10px;
 }
 
-#enhanceContainer,
-.reglageCommun {
+.optContainer div div input{
+    margin-right: 5px;
+}
+
+.optContainer div,
+#reglageCommun {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.reglageCommun>*,
+#reglageCommun>*,
 a {
     margin: 2px;
 }

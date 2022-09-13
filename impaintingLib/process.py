@@ -8,9 +8,14 @@ from torchvision import transforms
 import numpy as np
 import impaintingLib as imp
 
+<<<<<<< HEAD
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, show_images=True, summary=True):
+=======
+
+def train_inpainting_segmented_keypoints(net, optimizer, loader, alter, losses, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, show_images=True):
+>>>>>>> 547860ff5cd85fb828a1a513004468dcd51f0c55
     
     net.train()
     accum_iter = 100 
@@ -27,7 +32,11 @@ def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", sc
 
         for batch_idx,(x,_) in enumerate(t2):
             x = x.to(device)
+<<<<<<< HEAD
             #x = imp.data.randomTransfo(x)
+=======
+            x = imp.data.randomTransfo(x)
+>>>>>>> 547860ff5cd85fb828a1a513004468dcd51f0c55
             x_prime = alter(x)
             
             with torch.set_grad_enabled(True):
@@ -65,6 +74,7 @@ def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", sc
             imp.utils.plot_img(torch.clip(outputs[:8], 0, 1))
             imp.utils.plot_img(keypointLayer[:8])
             
+<<<<<<< HEAD
         if summary:
             writer = SummaryWriter("runs/" + runName)
             writer.add_scalar("training loss", mean(running_loss), epoch)
@@ -72,5 +82,13 @@ def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", sc
             writer.add_image("Mask",make_grid(x_prime[:8]))
             writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
             writer.close()
+=======
+        # writer = SummaryWriter("runs/" + runName)
+        # writer.add_scalar("training loss", mean(running_loss), epoch)
+        # writer.add_image("Original",make_grid(x[:8]))
+        # writer.add_image("Mask",make_grid(x_prime[:8]))
+        # writer.add_image("Predict",make_grid(torch.clip(outputs[:8], 0, 1)))
+        # writer.close()
+>>>>>>> 547860ff5cd85fb828a1a513004468dcd51f0c55
         
         torch.save(net.state_dict(),"./modelSave/train/{}_{}".format(runName,epoch))

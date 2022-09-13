@@ -8,7 +8,9 @@ from torchvision import transforms
 from PIL import Image, ImageChops
 from datetime import datetime
 import json
+import cv2
 
+import impaintingLib as imp
 from impaintingLib.model import keypoint
 
 # ---------------
@@ -34,27 +36,29 @@ classif = imp.model.ClassifierUNet()
 classif.load_state_dict(torch.load(classifier_weight_path,map_location=device))
 classif.eval()
 
-# Enhancer
-enhancer_weight_path = './modelSave/RRDB_ESRGAN_x4.pth'
-enhancer = imp.model.RRDBNet(3, 3, 64, 23, gc=32)
-enhancer.load_state_dict(torch.load(enhancer_weight_path,map_location=device))
-enhancer.eval()
-
-# Keypoints
-keypoint_weight_path = "./modelSave/keypoint.pth"
-keypointModel = imp.model.XceptionNet()
-keypointModel.load_state_dict(torch.load(keypoint_weight_path,map_location=device))
-keypointModel.eval()
+# Background remover
+torch.hub.set_dir("./modelSave/bg")
+bgRemove = torch.hub.load('pytorch/vision:v0.6.0', 'deeplabv3_resnet101', pretrained=True)
+bgRemove.eval()
 
 # ---------------
 
+resize = (120*factorResize, 120*factorResize) # Default one 
 
-def convertImage(image,doCrop=True):
+def convertImage(image,resize=None,transparentFill=False):
     w,h = image.size
-    resize = (120*factorResize, 120*factorResize)
-    crop   = (64*factorResize, 64*factorResize)
+    maxs = max(w,h)
 
-    if doCrop : 
+    if w != h : 
+        filling = (255,255,255)
+        if transparentFill :
+            filling = 255
+        result = Image.new(image.mode, (maxs, maxs), filling)
+        result.paste(image, ((maxs-w)//2, (maxs-h)//2))
+        image = result
+
+    crop   = (64*factorResize, 64*factorResize)
+    if resize : 
         process = transforms.Compose([
             transforms.Resize(resize), 
             transforms.CenterCrop(crop),
@@ -65,30 +69,10 @@ def convertImage(image,doCrop=True):
             transforms.Resize(crop), 
             transforms.ToTensor()
     ])
-
     image = process(image)
     c,w,h = image.shape
     image = image.view(1,c,w,h)
     return image
-
-def simplifyChannels(x):
-    x = np.where(x == 3, 0, x) 
-    x = np.where(x == 4, 3, x) 
-    x = np.where(x == 5, 3, x) 
-    x = np.where(x == 6, 4, x) 
-    x = np.where(x == 7, 4, x) 
-    x = np.where(x == 8, 5, x) 
-    x = np.where(x == 9, 5, x) 
-    x = np.where(x == 10 , 6, x) 
-    x = np.where(x == 11, 7, x) 
-    x = np.where(x == 12, 7, x)  
-    x = np.where(x > 12, 0, x) 
-    return x
-
-def npToTensor(x):
-    x = torch.from_numpy(x)
-    x = x.float()
-    return x
 
 def segment(image):
     with torch.no_grad():
@@ -99,68 +83,64 @@ def segment(image):
         # classifiedImage = torch.nn.functional.avg_pool2d(classifiedImage, scale_factor)
         _,_,w,_ = classifiedImage.shape
         classifPlain = imp.loss.generate_label_plain(classifiedImage,w)
-        classifPlain = simplifyChannels(classifPlain)
-        # classifPlain = npToTensor(classifPlain)
+        classifPlain = imp.components.simplifyChannels(classifPlain)
         classifPlain = (classifPlain + 1) * 25
         classifPlain = classifPlain.astype(np.uint8)
         pil_image = Image.fromarray(classifPlain[0])
     return pil_image
 
-def addKeypoints(images_list, landmarks_list):
-    n,_,w,h = images_list.shape
-    layers = torch.zeros((n,1, w, h), dtype=images_list.dtype, device=images_list.device)
-    for i,landmarks in enumerate(landmarks_list):
-        layer = torch.empty((1, w, h), dtype=images_list.dtype, device=images_list.device).fill_(0.1)
-        for x,y in landmarks:
-            x = int(x.item()) - 1
-            y = int(y.item()) - 1
-            layer[0][y][x] = 1
-        layers[i] = layer
-    return layers
+def make_transparent_foreground(pic, mask):
+    b, g, r = cv2.split(np.array(pic).astype('uint8'))
+    a = np.ones(mask.shape, dtype='uint8') * 255
+    alpha_im = cv2.merge([b, g, r, a], 4)
+    bg = np.zeros(alpha_im.shape)
+    new_mask = np.stack([mask, mask, mask, mask], axis=2)
+    foreground = np.where(new_mask, alpha_im, bg).astype(np.uint8)
+    return foreground
 
-def getLandmarks(x):
-    x = transforms.Grayscale()(x)
-    keypoint_list = []
+
+def remove_background(input_image):
+    preprocess = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    input_tensor = preprocess(input_image)
+    input_batch = input_tensor.unsqueeze(0)  # create a mini-batch as expected by the model
+
+    # move the input and model to GPU for speed if available
+    if torch.cuda.is_available():
+        input_batch = input_batch.to('cuda')
+        bgRemove.to('cuda')
+
     with torch.no_grad():
-        keypoints = keypointModel(x)
-        _,_,w,_ = x.shape
-        image_dim = w
-        for landmarks in keypoints:
-            landmarks = landmarks.view(-1, 2)
-            landmarks = (landmarks + 0.5) * image_dim
-            landmarks = landmarks.cpu().detach().numpy().tolist()
-            landmarks = np.array([(x, y) for (x, y) in landmarks if 0 <= x <= image_dim and 0 <= y <= image_dim])
-            landmarks = torch.from_numpy(landmarks)
-            keypoint_list.append(landmarks)
-    return keypoint_list
+        output = bgRemove(input_batch)['out'][0]
+    output_predictions = output.argmax(0)
 
-def getKeypoints(x, model=keypointModel):
-    keypoints = getLandmarks(x)
-    layers = addKeypoints(x, keypoints)
-    return layers
+    # create a binary (black and white) mask of the profile foreground
+    mask = output_predictions.byte().cpu().numpy()
+    background = np.zeros(mask.shape)
+    bin_mask = np.where(mask, 255, background).astype(np.uint8)
 
-def impaint(mask,segmented,enhance,keypoints,modelOpt):
-    image = Image.open("./impaintingWeb/static/image/original.jpg")
-    image   = convertImage(image)
-    mask    = convertImage(mask)
-    segmented = convertImage(segmented,doCrop=False)
+    foreground = make_transparent_foreground(input_image, bin_mask)
+    return foreground, bin_mask
+
+def impaint(mask,segmented,enhance,removeBg,keypoints,modelOpt,resize):
+    image = Image.open("./impaintingWeb/static/image/original.png")
+    image   = convertImage(image,resize)
+    mask    = convertImage(mask,resize,transparentFill=True)
+    segmented = convertImage(segmented)
 
     segmented = segmented * 255
     segmented = (segmented / 25) - 1
     segmented = torch.round(segmented)
     segmented = (segmented / 9) + 0.1
 
-    n, c, h, w = image.shape
-    x_prime = torch.empty((n, c, h, w), dtype=image.dtype, device=image.device)
-    for i, (img, mask) in enumerate(zip(image, mask)):
-        propag_img = img.clone()
-        mask_bit = (mask > 0.5) * 1.
-        for j,channel in enumerate(img[:3]) :
-            propag_img[j] = channel * mask_bit
-        x_prime[i] = propag_img
+    mask = (mask < 0.5) * 1.
+    x_prime = imp.mask.propagate(image,mask)
 
     x_prime2 = torch.cat((x_prime,segmented),dim=1)
-    keypointLayer = addKeypoints(image, keypoints)
+    keypointLayer = imp.components.addKeypoints(image, keypoints)
     x_prime3 = torch.cat((x_prime2, keypointLayer),dim=1)
 
     with torch.no_grad():
@@ -173,16 +153,22 @@ def impaint(mask,segmented,enhance,keypoints,modelOpt):
             
         image_hat = torch.clip(image_hat,0,1)[:,:3]
         if enhance : 
-            image_hat = enhancer(image_hat)
+            image_hat = imp.components.superRes(image_hat)
+            
+        if removeBg :
+            image_hat = transforms.ToPILImage()(image_hat[0])
+            image_hat, _ = remove_background(image_hat)
+            image_hat = Image.fromarray(image_hat)
+        else : 
+            image_hat = transforms.ToPILImage()(image_hat[0])
 
-    image_hat = transforms.ToPILImage()(image_hat[0])
     return image_hat
 
 # ---------------
 
 @impBP.route("/")
 async def home():
-    return await render_template('home.html')
+    return await render_template('homeImp.html')
 
 # Recevoir l'image encodé en Base 64
 # Générer la segmentation et croper/resizer au bon format
@@ -192,18 +178,21 @@ async def home():
 async def segmentPOST():
     ask        = await request.form
     dataB64    = ask["imgB64"]
-    img = Image.open(BytesIO(base64.b64decode(dataB64))).convert('RGB')
-    img.save("./impaintingWeb/static/image/original.jpg")
-    
-    original_crop = convertImage(img)
-    segmented = segment(original_crop)
-    segmented.save("./impaintingWeb/static/image/mask.jpg")
+    size       = int(ask["size"])
+    resize = [size*factorResize, size*factorResize]
 
-    keypoints = getLandmarks(original_crop)[0]
+    img = Image.open(BytesIO(base64.b64decode(dataB64))).convert('RGB')
+    img.save("./impaintingWeb/static/image/original.png")
+
+    original_crop = convertImage(img,resize)
+    segmented = segment(original_crop)
+    segmented.save("./impaintingWeb/static/image/mask.png")
+
+    keypoints = imp.components.getLandmarks(original_crop)[0]
     keypoints = keypoints.tolist()
 
     original_crop = transforms.ToPILImage()(original_crop[0])
-    original_crop.save("./impaintingWeb/static/image/original_crop.jpg")
+    original_crop.save("./impaintingWeb/static/image/original_crop.png")
 
     return {"keypoints" : keypoints}
 
@@ -216,9 +205,14 @@ async def predictPOST():
     maskB64    = ask["maskB64"]
     segmentB64 = ask["segmentB64"]
     doEnhance  = ask["doEnhance"]
+    doRemoveBg = ask["doRemoveBg"]
+    size       = int(ask["size"])
     modelOpt   = ask["modelOpt"]
     keypoints  = ask["keypoints"]
     doEnhance = doEnhance == "true" 
+    doRemoveBg = doRemoveBg == "true" 
+
+    resize = [size*factorResize, size*factorResize]
 
     mask = Image.open(BytesIO(base64.b64decode(maskB64)))
     mask.load() # required for png.split()
@@ -232,8 +226,8 @@ async def predictPOST():
     keypoints = torch.Tensor(keypoints)
     keypoints = torch.unsqueeze(keypoints, dim=0)
 
-    predict = impaint(mask,segment,doEnhance,keypoints,modelOpt)
-    predict.save("./impaintingWeb/static/image/predict.jpg")
+    predict = impaint(mask,segment,doEnhance,doRemoveBg,keypoints,modelOpt,resize)
+    predict.save("./impaintingWeb/static/image/predict.png")
     return {"ok" : True}
 
 # Recevoir le masque et la segmentation
@@ -251,6 +245,6 @@ async def download():
     mask = maskRGB.convert("L")
     segment = Image.open(BytesIO(base64.b64decode(segmentB64))).convert("L")
 
-    mask.save("./impaintingWeb/static/image/downloaded/mask.jpg")
-    segment.save("./impaintingWeb/static/image/downloaded/seg.jpg")
+    mask.save("./impaintingWeb/static/image/downloaded/mask.png")
+    segment.save("./impaintingWeb/static/image/downloaded/seg.png")
     return {"ok" : True}
