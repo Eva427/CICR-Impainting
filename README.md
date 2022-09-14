@@ -3,18 +3,18 @@
 ## Présentation
 
 Ce repo à été crée en juin 2022 à l'occasion d'un stage en partenariat entre l'INSA et le CICR. L'objectif était de produire un modèle capable de reconstruire un visage abimé. 
-[résultat produit]
+- [résultat produit]
 En cas de problèmes pour nous contacter : thomashoger@hotmail.fr
  
 ## Installation 
 
 ### Installation des libraries
 
-Utiliser le ./requirements.txt
+Utiliser la commande **pip install -r ./requirements.txt**
 
 ### Téléchargement des datasets 
 
-- Lancer un inviter de commande et éxecuter ./dataset.sh téléchargera tous les datasets que nous avons utilisés
+- Lancer un inviter de commande et éxecuter **./dataset.sh** téléchargera tous les datasets que nous avons utilisés
 - Attention à avoir assez de place sur la machine
 - A la fin le dossier data est censé contenir : "flickr" "lfw" "test_masks" "celeba" "utk" "test"
 - Si tous ces dossiers ne sont pas dans data alors leur .zip doit se trouver dans data/ et peuvent être extrait manuellement
