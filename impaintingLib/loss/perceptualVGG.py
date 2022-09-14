@@ -3,6 +3,8 @@ import torchvision.models as models
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+__all__ = ["perceptualVGG"]
+
 def gram_matrix(input):
     a, b, c, d = input.size()   # a=batch size(=1)
                                 # b=number of feature maps
@@ -37,28 +39,19 @@ class LossNetwork(torch.nn.Module):
     
 loss_network = LossNetwork()
     
-def perceptualVGG(x, y):
-    
-    #mse = torch.nn.MSELoss()
-    #_feats = loss_network(x[:,:3])
-    #_feats = loss_network(y[:,:3])
-
-    #content loss:
-    #oss = mse(x_feats[2], y_feats[2].detach())
-    
-    #style loss:
-    #for feats, target_feats in zip(x_feats, y_feats):
-    #   loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
-        
-    #return loss
+def perceptualVGG(x, x_hat):
+    """ Compare l'image originale et la reconstruite et essaie de les faire tendre vers un visage normale
+    - **x** : torch.Size([batch_size, c, w, h])
+    - **x_hat** : torch.Size([batch_size, c, w, h])
+    - **return** : int"""
 
     mse = torch.nn.MSELoss()
     x_feats = loss_network(x)
     with torch.no_grad():
-        y_feats = loss_network(y)
+        x_hat_feats = loss_network(x_hat)
     #content loss:
-    loss = mse(x_feats[2], y_feats[2].detach())
+    loss = mse(x_feats[2], x_hat_feats[2].detach())
     #style loss:
-    for feats, target_feats in zip(x_feats, y_feats):
+    for feats, target_feats in zip(x_feats, x_hat_feats):
         loss += mse(gram_matrix(feats), gram_matrix(target_feats.detach()))
     return loss

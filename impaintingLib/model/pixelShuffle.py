@@ -1,3 +1,16 @@
+"""Utilisation : 
+
+    model = SubPixelNetwork(in_channels, upscale_factor)
+
+- **in_channels** : Nombre de channel en entrée
+- **upscale_factor** : Facteur d'augmentation de la taille de l'image
+
+
+---
+"""
+
+__all__ = []
+
 import torch.nn as nn
 
 class SubPixelNetwork(nn.Module):

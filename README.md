@@ -23,11 +23,11 @@ Utiliser la commande **pip install -r ./requirements.txt**
 
 En cas d'erreur liens de téléchargement : 
 - [Celeba](https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing&resourcekey=0-dYn9z10tMJOBAkviAcfdyQ)
-- [Flickr](https://drive.google.com/drive/folders/1tg-Ur7d4vk1T8Bn0pPpUSQPxlPGBlGfv) : 
-- [Lfw](http://vis-www.cs.umass.edu/lfw/lfw.tgz) : 
-- [Utk](https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw) : 
-- [Nvidia mask test](https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip) : 
-- [Nvidia mask training](https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip) (non utilisé) : 
+- [Flickr](https://drive.google.com/drive/folders/1tg-Ur7d4vk1T8Bn0pPpUSQPxlPGBlGfv) 
+- [Lfw](http://vis-www.cs.umass.edu/lfw/lfw.tgz) 
+- [Utk](https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw) 
+- [Nvidia mask test](https://www.dropbox.com/s/01dfayns9s0kevy/test_mask.zip) 
+- [Nvidia mask training](https://www.dropbox.com/s/qp8cxqttta4zi70/irregular_mask.zip) (non utilisé) 
 
 
 ## Application
@@ -38,7 +38,8 @@ En cas d'erreur liens de téléchargement :
 
 ### Utilisation 
 
-![Alt Text](./guide.gif)
+![Gif d'utilisation de l'application](./guide.gif) </br>
+
 Plusieurs options ne sont pas présenté dans le gif ci-dessus: 
 - **Image's resizing** : Faire glisser le curseur vers la gauche fera "dézoomer" et inversement en allant à droite.  Il faudra appuyer sur le bouton à côté après modification du curseur. Un resizing entraine la perte de la segmentation et des keypoints courants.
 - **Autres curseurs** : Ils servent à modifier la taille de la brosse lors du dessin.

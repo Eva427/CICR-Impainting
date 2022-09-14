@@ -1,3 +1,7 @@
+"""Utilisé par le module components"""
+
+__all__ = []
+
 import torch
 import torchvision
 import torch.nn as nn

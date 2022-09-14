@@ -1,3 +1,7 @@
+"""Utilisé par le module components"""
+
+__all__ = []
+
 import functools
 import torch
 import torch.nn as nn

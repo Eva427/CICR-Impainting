@@ -1,6 +1,8 @@
 import torch
 import impaintingLib as imp
 
+__all__ = ["ganLoss"]
+
 def hinge_loss_d(pos, neg):
     """
     gan with hinge loss:
@@ -28,6 +30,11 @@ def successRate(d):
     return res
 
 def ganLoss(x, x_hat, discriminator):
+    """ Loss utilisé par le GAN simpliste que nous avons implémenté
+    - **x** : torch.Size([batch_size, c, w, h])
+    - **x_hat** : torch.Size([batch_size, c, w, h])
+    - **discriminator** : un discriminateur
+    - **return** : int"""
     x_input = allButMask(x)
     x_hat_input = allButMask(x_hat)
     

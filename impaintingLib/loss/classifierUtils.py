@@ -1,8 +1,12 @@
+"""Utilisé par le classifier, il n'y a rien à prendre ici"""
+
 import os
 import torch
 import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
+
+__all__ = []
 
 def make_folder(path, version):
         if not os.path.exists(os.path.join(path, version)):

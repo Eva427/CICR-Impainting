@@ -1,3 +1,7 @@
+"""Utilisé par le module components, un peu technique ne pas trop fouiller"""
+
+__all__ = []
+
 import torch.nn as nn
 
 from impaintingLib.model.layer import *

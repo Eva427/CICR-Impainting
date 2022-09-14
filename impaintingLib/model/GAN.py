@@ -1,3 +1,16 @@
+"""Utilisation : 
+
+    discriminator = imp.model.Discriminator(cnum_in=5, cnum=64)
+
+- **cnum_in** : Nombre de channel en entrée
+- **cnum** : Taille de l'image
+
+
+---
+"""
+
+__all__ = []
+
 import torch.nn.functional as F
 import torch.nn as nn
 import torch

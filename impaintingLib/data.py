@@ -7,6 +7,8 @@ import random
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+__all__ = ["getDataset","getTestImages","testReal","randomTransfo"]
+
 def getSize(factor=1):
     numWorker = 2 
     wr,hr = resize = (120, 120)
@@ -29,12 +31,9 @@ def getSize(factor=1):
         
     return resize,crop,numWorker,batchSize
 
-def getMasks(seed=0,resize=1,test=False):
+def getMasks(seed=0,resize=1):
     
-    if test:
-        path = "data/test_masks"
-    else : 
-        path = "data/masks"
+    path = "data/masks"
 
     _,crop,numWorker,batchSize = getSize(resize)
     transformations = [
@@ -54,19 +53,13 @@ def getMasks(seed=0,resize=1,test=False):
                                   generator=g,
                                   num_workers=numWorker)
     return masks
-    
-def normalize(x):
-    transfo = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                   std =[0.229, 0.224, 0.225])
-    return transfo(x)
 
-def inv_normalize(x):
-    transfo = transforms.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225],
-                                   std=[1/0.229, 1/0.224, 1/0.225])
-    x = x[:,:3]
-    return transfo(x)
-
-def getDataset(file,factorResize=1,doCrop=True,doShuffle=True):
+def getDataset(file:str,factorResize=1,doCrop=True):
+    """ Crée un objet `ImageFolder` que l'on transforme ensuite en dataloader
+    - **file** : Chemin vers un dossier de data 
+    - **factorResize** : Les images de ce dataset auront une taille de 64\*factorResize
+    - **doCrop** : Si `True` effectue un zoom sur le centre de l'image
+    - **return** : ImageFolder"""
     resize = (120*factorResize, 120*factorResize)
     crop   = (64*factorResize, 64*factorResize)
     if doCrop :
@@ -83,11 +76,28 @@ def getDataset(file,factorResize=1,doCrop=True,doShuffle=True):
     return ImageFolder(file, process)
 
 def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
+    """ Renvoie un unique batch de taille 16 utile pour tester un modèle
+    - **file** : Chemin vers un dossier de data 
+    - **factorResize** : Les images de ce dataset auront une taille de 64*factorResize
+    - **doCrop** : Si `True` effectue un zoom sur le centre de l'image
+    - **doShuffle** Si `True` mélange aléatoirement le dataset, sinon renvoie toujours les premieres images du dossier
+    - **return** : torch.Size([16, 3, 64\*factorResize, 64\*factorResize])"""
+
     dataset = getDataset(file,factorResize,doCrop,doShuffle)
     dataset = DataLoader(dataset, num_workers=2, batch_size=16, shuffle=doShuffle)
     return next(iter(dataset))[0]
 
 def testReal(impainter,base=True,altered=True,segmented=False,keypoints=False,predicted=True):
+    """ Va chercher les images, masques et segmentations usuelles présentes dans le dossier **/data/test** pour tester directement un modèle donné dessus
+    - **impainter** : Modèle à tester
+    - **base** : Si `True` affiche l'image originale
+    - **altered** : Si `True` affiche l'image masquée
+    - **segmented** : Si `True` affiche l'image segmenté
+    - **keypoints** : Si `True` affiche les keypoints
+    - **predicted** : Si `True` affiche l'image reconstruite
+    - **return** : `None`
+    """
+
     image = getTestImages("./data/test/real",factorResize=2).to(device)
     mask = getTestImages("./data/test/mask",factorResize=2).to(device)
     segment  = getTestImages("./data/test/seg",factorResize=2,doCrop=False).to(device)
@@ -209,6 +219,19 @@ def sharpness(img):
     return enhance(img,func)
 
 def randomTransfo(imgs):
+    """ Fais de la data augmentation (avec une certaine probabilité) sur les imgs données en entrée 
+    - **x** : torch.Size([batch_size, **3**, w, h]) 
+    - **return** : torch.Size([batch_size, **3**, w, h])
+    
+    Augmentations implémentés : 
+    - crop 
+    - rotation
+    - mirroir
+    - luminosité - *(désactivé)*
+    - contraste - *(désactivé)*
+    - couleurs - *(désactivé)*
+    - sharpness - *(désactivé)*
+    """
     
     #(mu,sigma) = (1,0.15)
     (mu,sigma) = (1.3,0.4)
@@ -223,6 +246,7 @@ def randomTransfo(imgs):
         #transfos = [zoom, rotation, mirror, lumi, contrast, color, sharpness]
         #transfos = [mirror, lumi, contrast, color, sharpness]
         transfos = [crop, rotation, mirror]
+
         for i in range(nbTransfo):
             func = random.choice(transfos)
             #print(func. __name__)

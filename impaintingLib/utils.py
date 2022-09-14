@@ -7,7 +7,15 @@ from torchvision import transforms
 import torch
 import os
 
+__all__ = ["plot_img"]
+
 def plot_img(x,title=""):
+    """ Affiche les images fournies en entrée
+    - **x** : torch.Size([batch_size, **3**, w, h]) 
+    - **title** : Si title n'est pas null l'affiche au dessus de l'image
+    - **return** : `None`
+    """
+
     img_grid = make_grid(x[:16])
     plt.figure(figsize=(20,15))
     plt.imshow(img_grid.cpu().permute(1, 2, 0))

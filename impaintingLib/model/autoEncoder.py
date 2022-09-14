@@ -1,8 +1,17 @@
+"""Utilisation : 
+
+    model = AutoEncoder(in_channels)
+
+---
+"""
+
 import torch.nn as nn
+
+__all__ = []
 
 class AutoEncoder(nn.Module):
     
-    def __init__(self,in_channels=4):
+    def __init__(self,in_channels=5):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=4, stride=2),
