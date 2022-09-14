@@ -60,3 +60,23 @@ Mises en garde quant à l'application web :
 ### Historique des pistes envisagés
 
 disponible ici ....
+
+### Références
+```
+ESRGAN : 
+@InProceedings{wang2018esrgan,
+    author = {Wang, Xintao and Yu, Ke and Wu, Shixiang and Gu, Jinjin and Liu, Yihao and Dong, Chao and Qiao, Yu and Loy, Chen Change},
+    title = {ESRGAN: Enhanced super-resolution generative adversarial networks},
+    booktitle = {The European Conference on Computer Vision Workshops (ECCVW)},
+    month = {September},
+    year = {2018}
+}
+
+Segmentation
+@inproceedings{CelebAMask-HQ,
+  title={MaskGAN: Towards Diverse and Interactive Facial Image Manipulation},
+  author={Lee, Cheng-Han and Liu, Ziwei and Wu, Lingyun and Luo, Ping},
+  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2020}
+}
+```
