@@ -5,7 +5,6 @@
 
 Ce repo à été crée en juin 2022 à l'occasion d'un stage en partenariat entre l'INSA et le CICR. L'objectif était de produire un modèle capable de reconstruire un visage abimé. 
 - [résultat produit]
-En cas de problèmes pour nous contacter : thomashoger@hotmail.fr
  
 ## Installation 
 
@@ -46,7 +45,7 @@ Plusieurs options ne sont pas présenté dans le gif ci-dessus:
 - **Boutons gris dans l'onglet segmentation** : Ils permettent de changer le type de brosse en fonction d'un type de zone du visage.
 - **Enhance** : Utilisera un modèle ESRGAN sur le résultat pour améliorer la résolution (ne marche pas très bien sur les zones reconstruites.
 
-Une version de test est disponible à l'adresse : https://heinekayn.me
+Une version de test est disponible à l'adresse : https://heinekayn.me</br>
 Mises en garde quant à l'application web : 
 - Il peut y avoir quelques bugs (il faut parfois refresh la page ou rappuyer une autre fois sur un bouton)  
 - Le serveur peut être arrêté de temps en temps pour des updates ou à cause d'un bug (il y'aura alors une erreur 502 bad gateway)  
