@@ -56,7 +56,7 @@ Mises en garde quant à l'application web :
 ## Présentation de la librairie
 
 - Un tutoriel est disponible dans le notebook tutorial.ipynb
-- La documentation est disponible ....
+- La documentation est disponible dans ./documentation
 
 ### Historique des pistes envisagés
 
