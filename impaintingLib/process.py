@@ -4,6 +4,7 @@ from tqdm.notebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import os
 from torchvision import transforms
+from torchvision.utils import make_grid
 
 import numpy as np
 import impaintingLib as imp
