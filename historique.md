@@ -24,7 +24,9 @@ Le modèle que nous avons implémenté et testé était relativement simpliste d
 
 Les pistes envisagés étaient  de continuer sur le patchgan et de demander de l'aide à des spécialistes de GAN parce que c'est vraiment dur à entrainer. 
 
-# Components 
+# Components
+On a rajouté à notre RGB image (3 channels) 2 nouveaux channels qui apportent des informations en plus au modèle.
+
 ## Segmentation
 La segmentation (classification) est l'utilisation d'un modèle pré-entrainé pour reconnaitre les différentes zones d'un visage humain. Ces informations sont renvoyées sous forme de tensor de même taille que l'image et sur 1 seule couche que l'on concaténe avec l'image à impainter. Chaque pixel possède une valeur symbolisant une zone probable.
 
