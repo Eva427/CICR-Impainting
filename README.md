@@ -16,9 +16,15 @@ Utiliser la commande **pip install -r ./requirements.txt**
 
 - Lancer un inviter de commande et éxecuter **./dataset.sh** téléchargera tous les datasets que nous avons utilisés
 - Attention à avoir assez de place sur la machine
-- A la fin le dossier data est censé contenir : **"flickr" "lfw" "masks" "celeba" "utk" "test"**
 - Si tous ces dossiers ne sont pas dans data alors leur .zip doit se trouver dans le repertoire racine et peuvent être extrait manuellement
-- Attention à donner le même nom que cité précedemment aux dataset pour que la librairie les retrouve bien
+- Attention à donner le même nom que ceux suivants pour que la librairie les retrouve bien : </br>
+**data/ </br>
+├─ utk/</br>
+├─ test/</br>
+├─ masks/</br>
+├─ flickr/</br>
+├─ lfw/</br>
+├─ celeba/**
 
 En cas d'erreur liens de téléchargement : 
 - [Celeba](https://drive.google.com/file/d/0B7EVK8r0v71pZjFTYXZWM3FlRnM/view?usp=sharing&resourcekey=0-dYn9z10tMJOBAkviAcfdyQ)
