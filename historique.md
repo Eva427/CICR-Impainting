@@ -33,7 +33,14 @@ La segmentation est très puissante et à grandement amélioré les résultats q
 Attention cependant, si vous refaites la segmentation à ne pas donner au modèle trop d'information. Ce qu'on faisait initialement était de reprendre les 3 couches très détaillées sorties par le segmenteur ce qui recréait les images à l'identique quelque soit les zones impaintés.
 
 ## Keypoints
+On a ici aussi utilisé un modèle pré-entrainé qui, lorsqu'on lui donne une image en entrée nous sort une liste de points clés du visage. On convertie ensuite cette liste de points en un tensor de même dimension que l'image et sur 1 seule couche où les pixels indiqués par les coordonnés de keypoints sont en blanc et le reste en noir. 
+
+Le modèle marche très bien et l'ajout des keypoints améliore les résultats obtenus. Cependant les keypoints ne fonctionnant pas à basse résolution nous sommes du coup obligés d'entrainer directement sur des images en 128x128 ce qui est plus long.
+
 ## Super Résolution
+On a utilisé ici un ESRGAN pré-entrainé qui sert à améliorer la qualité d'une image donné. L'idée était que le modèle ne pouvant apprendre à reconstuire des images que de qualité limité, la reconstruction aurait toujours une plus petite définition que l'originale et il aurait été intéressant de regagner en qualité. 
+
+Le modèle marche très bien et donne de bons résultats sur des images classiques mais la super résolution d'images reconstruire crée des artefacts étranges et du flou au niveau des zones impainté. Il serait du coup peut être intéressant d'entrainer un modèle de super résolution nous même qui saurait gérer ce problème (ou en trouver un qui marche sur internet).
 
 # Loss
 ## Perceptuelle
@@ -48,18 +55,27 @@ Nous avons esayé de reprendre les outils de segmentation et de keypoints pour e
 
 # Data
 ## Datasets
-## Normalisation
-## Data Augmentation
-## Masques 
+Nous avons commencé avec LFW puis rajouté Flickr et avons gardé ces deux là pendant un moment. A la toute fin du stage nous avons rajouté celeba et UTK.
 
-# Autre
-## Augmentation graduelle de la résolution
+## Normalisation
+On en faisait au début mais on a arrêté quand on est passé sur du 5 channels en input. Ca peut cependant être une piste d'essayer d'en remettre auxquel cas il faudrait utiliser la même que celle de VGG16. Ces normalisations sont disponibles dans le module data.py.
+
+## Data Augmentation
+On a essayé la data augmentation (zoom, mirroir, rotation..) mais les résultats n'étaient pas transcendants. Pire les zooms réduisent souvent la qualité de la segmentation ce qui fait perdre des informations au modèle.
+
+## Masques 
+Les premiers masques étaients des carrés de taille et de position aléatoire. Ils étaient très rapide à process mais n'étaient pas très pertinents. On a donc ensuite utilisé des masques crées par nvidia qui étaient plus naturels. Nous avons ainsi eu de bien meilleurs résultats.
+
+Une approche proposé par David en fin de stage était de commencer dans un premier temps par des très gros masques (qui recouvriraient l'intégralité de l'image) pour apprendre à reconstruire "grossierement" puis affiner avec des masques irréguliers de Nvidia.
 
 # Pistes non explorés (du plus au moins intéressant)
 ## Modèles de diffusion
-## Deepfillv2
+Le stage à eu lieu au moment où les modèles de diffusion ont vraiment commencé à exploser (avec Dalle-2, [RePaint ](https://github.com/andreas128/RePaint), [HuggingFace](https://github.com/huggingface/diffusers)...). Ils sont hyper puissants pour créer des choses à partir de rien mais on a eu un peu plus de mal à les faire fonctionner en tant qu'impainter. Par exemple avec RePaint  on a pu reconstruire un nez d'excellente qualité mais qui faisait la moitié du visage.
 
-# Conclusion
+Il aurait donc été intéressant d'essayer d'entrainer nous même des modèles de diffusion mais comme ces modèles sont relativement récents et qu'on arrivait en fin de stage nous n'avons pas eu le temps d'avoir des entrainements concluants. C'est en tout cas la piste la plus prometteuse.
+
+## Deepfillv2
+On a testé des modèles type [DeepFillv2](https://github.com/nipponjo/deepfillv2-pytorch) mais ça ne marchait pas très bien.
 
 # Application
 Au début on voulait utiliser Gradio mais c'était assez limité et on aurait pas pu implémenter la segmentation et les keypoints. Donc on a développé rapidement une appli web mais comme c'était pas l'objet du stage initialement l'appli est un peu bâclé et sera assez dur à reprendre ensuite. Elle utilise python pour le backend et du html/js/css pur pour le front.
