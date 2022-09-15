@@ -14,7 +14,7 @@ Utiliser la commande **pip install -r ./requirements.txt**
 
 ### Téléchargement des datasets 
 
-- Lancer un inviter de commande et éxecuter **./dataset.sh** téléchargera tous les datasets que nous avons utilisés
+- Lancer un inviter de commande et éxecuter [./dataset.sh](dataset.sh) téléchargera tous les datasets que nous avons utilisés
 - Attention à avoir assez de place sur la machine
 - Si tous ces dossiers ne sont pas dans data alors leur .zip doit se trouver dans le repertoire racine et peuvent être extrait manuellement
 - Attention à donner le même nom que ceux suivants pour que la librairie les retrouve bien : </br>
@@ -60,12 +60,12 @@ Mises en garde quant à l'application web :
 
 ## Présentation de la librairie
 
-- Un tutoriel est disponible dans le notebook tutorial.ipynb
-- La documentation est disponible dans ./documentation ou en utilisant **pdoc .\impaintingLib** après avoir **pip install pdoc**
+- Un tutoriel est disponible dans le notebook [tutorial.ipynb](tutorial.ipynb)
+- La documentation est disponible [ici](documentation/) ou en utilisant **pdoc .\impaintingLib** après avoir **pip install pdoc**
 
 ### Historique des pistes envisagés
 
-disponible ici ....
+Disponible [ici](historique.md)
 
 ### Références
 ```
