@@ -4,8 +4,9 @@
 ## Présentation
 
 Ce repo à été crée en juin 2022 à l'occasion d'un stage en partenariat entre l'INSA et le CICR. L'objectif était de produire un modèle capable de reconstruire un visage abimé. 
-- [résultat produit]
- 
+
+![Results](./results.png) </br>
+
 ## Installation 
 
 ### Installation des libraries
