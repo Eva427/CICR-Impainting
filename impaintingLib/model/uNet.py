@@ -1,3 +1,19 @@
+"""Utilisation : 
+
+    model = UNet(in_channels, out_channels, netType="default", convType="conv2d", doubleLayer=False)
+
+- **in_channels** : Nombre de channel en entrée
+- **out_channels** : Nombre de channel de sortie (en théorie 3)
+- **netType** : "partial" pour que les convolutions soient partielles, sinon classique
+- **convType** : "conv2d" pour convolution classique, sinon gated conv
+- **doubleLayer** : Si `True` le réseau sera plus profond, il apprendra plus lentement mais mieux en théorie
+
+
+---
+"""
+
+__all__ = []
+
 import torch
 import torch.nn.functional as F
 from torch import nn

@@ -64,10 +64,7 @@ impaintingLib    </h1>
 
 <p>Ce repo à été crée en juin 2022 à l'occasion d'un stage en partenariat entre l'INSA et le CICR. L'objectif était de produire un modèle capable de reconstruire un visage abimé. </p>
 
-<ul>
-<li>[résultat produit]
-En cas de problèmes pour nous contacter : thomashoger@hotmail.fr</li>
-</ul>
+<p><img src="./examples.png" alt="examples" /> </br></p>
 
 <h2 id="installation">Installation</h2>
 
@@ -78,11 +75,17 @@ En cas de problèmes pour nous contacter : thomashoger@hotmail.fr</li>
 <h3 id="telechargement-des-datasets">Téléchargement des datasets</h3>
 
 <ul>
-<li>Lancer un inviter de commande et éxecuter <strong>./dataset.sh</strong> téléchargera tous les datasets que nous avons utilisés</li>
+<li>Lancer un inviter de commande et éxecuter <a href="dataset.sh">./dataset.sh</a> téléchargera tous les datasets que nous avons utilisés</li>
 <li>Attention à avoir assez de place sur la machine</li>
-<li>A la fin le dossier data est censé contenir : <strong>"flickr" "lfw" "masks" "celeba" "utk" "test"</strong></li>
 <li>Si tous ces dossiers ne sont pas dans data alors leur .zip doit se trouver dans le repertoire racine et peuvent être extrait manuellement</li>
-<li>Attention à donner le même nom que cité précedemment aux dataset pour que la librairie les retrouve bien</li>
+<li>Attention à donner le même nom que ceux suivants pour que la librairie les retrouve bien : </br>
+<strong>data/ </br>
+├─ utk/</br>
+├─ test/</br>
+├─ masks/</br>
+├─ flickr/</br>
+├─ lfw/</br>
+├─ celeba/</strong></li>
 </ul>
 
 <p>En cas d'erreur liens de téléchargement : </p>
@@ -115,7 +118,7 @@ En cas de problèmes pour nous contacter : thomashoger@hotmail.fr</li>
 <li><strong>Enhance</strong> : Utilisera un modèle ESRGAN sur le résultat pour améliorer la résolution (ne marche pas très bien sur les zones reconstruites.</li>
 </ul>
 
-<p>Une version de test est disponible à l'adresse : <a href="https://heinekayn.me">https://heinekayn.me</a>
+<p>Une version de test est disponible à l'adresse : <a href="https://heinekayn.me">https://heinekayn.me</a></br>
 Mises en garde quant à l'application web : </p>
 
 <ul>
@@ -128,13 +131,33 @@ Mises en garde quant à l'application web : </p>
 <h2 id="presentation-de-la-librairie">Présentation de la librairie</h2>
 
 <ul>
-<li>Un tutoriel est disponible dans le notebook tutorial.ipynb</li>
-<li>La documentation est disponible ....</li>
+<li>Un tutoriel est disponible dans le notebook <a href="tutorial.ipynb">tutorial.ipynb</a></li>
+<li>La documentation est disponible <a href="documentation/">ici</a> ou en utilisant <strong>pdoc .\impaintingLib</strong> après avoir <strong>pip install pdoc</strong></li>
 </ul>
 
 <h3 id="historique-des-pistes-envisages">Historique des pistes envisagés</h3>
 
-<p>disponible ici ....</p>
+<p>Disponible <a href="historique.md">ici</a></p>
+
+<h3 id="references">Références</h3>
+
+<pre><code>ESRGAN : 
+@InProceedings{wang2018esrgan,
+    author = {Wang, Xintao and Yu, Ke and Wu, Shixiang and Gu, Jinjin and Liu, Yihao and Dong, Chao and Qiao, Yu and Loy, Chen Change},
+    title = {ESRGAN: Enhanced super-resolution generative adversarial networks},
+    booktitle = {The European Conference on Computer Vision Workshops (ECCVW)},
+    month = {September},
+    year = {2018}
+}
+
+Segmentation
+@inproceedings{CelebAMask-HQ,
+  title={MaskGAN: Towards Diverse and Interactive Facial Image Manipulation},
+  author={Lee, Cheng-Han and Liu, Ziwei and Wu, Lingyun and Luo, Ping},
+  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2020}
+}
+</code></pre>
 </div>
 
                         <input id="impaintingLib-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">

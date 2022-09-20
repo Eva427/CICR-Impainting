@@ -255,8 +255,6 @@ width in pixels.</p>
 
 <p>This module supports :ref:<code>TensorFloat32&lt;tf32_on_ampere&gt;</code>.</p>
 
-<p>On certain ROCm devices, when using float16 inputs this module will use :ref:<code>different precision&lt;fp16_on_mi200&gt;</code> for backward.</p>
-
 <ul>
 <li><p><code>stride</code> controls the stride for the cross-correlation, a single
 number or a tuple.</p></li>
@@ -305,9 +303,6 @@ a depthwise convolution with a depthwise multiplier `K` can be performed with th
     <code>padding='valid'</code> is the same as no padding. <code>padding='same'</code> pads
     the input so the output has the shape as the input. However, this mode
     doesn't support any stride values other than 1.</p>
-
-<p>Note:
-    This module supports complex data types i.e. <code>complex32, complex64, complex128</code>.</p>
 
 <p>Args:
     in_channels (int): Number of channels in the input image
@@ -501,7 +496,6 @@ registered hooks while the latter silently ignores them.</p>
                 <dd id="PartialConv2d.set_extra_state" class="function">set_extra_state</dd>
                 <dd id="PartialConv2d.apply" class="function">apply</dd>
                 <dd id="PartialConv2d.cuda" class="function">cuda</dd>
-                <dd id="PartialConv2d.ipu" class="function">ipu</dd>
                 <dd id="PartialConv2d.xpu" class="function">xpu</dd>
                 <dd id="PartialConv2d.cpu" class="function">cpu</dd>
                 <dd id="PartialConv2d.type" class="function">type</dd>
@@ -517,7 +511,6 @@ registered hooks while the latter silently ignores them.</p>
                 <dd id="PartialConv2d.register_forward_hook" class="function">register_forward_hook</dd>
                 <dd id="PartialConv2d.T_destination" class="variable">T_destination</dd>
                 <dd id="PartialConv2d.state_dict" class="function">state_dict</dd>
-                <dd id="PartialConv2d.register_load_state_dict_post_hook" class="function">register_load_state_dict_post_hook</dd>
                 <dd id="PartialConv2d.load_state_dict" class="function">load_state_dict</dd>
                 <dd id="PartialConv2d.parameters" class="function">parameters</dd>
                 <dd id="PartialConv2d.named_parameters" class="function">named_parameters</dd>
