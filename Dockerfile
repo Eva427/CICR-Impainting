@@ -4,8 +4,10 @@ FROM python:3.10-slim-buster
 
 WORKDIR /cicr-docker
 
-COPY . /app/
+COPY . .
 
-RUN pip install -r /app/requirements.txt
+RUN pip install -r requirements.txt
 
-CMD ["hypercorn", "--bind", "0.0.0.0:5000", "myservice:app"]
+EXPOSE 5000
+
+CMD ["hypercorn", "--bind", "localhost:5000", "QuartApp.py"]
