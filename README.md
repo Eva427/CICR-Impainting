@@ -17,6 +17,7 @@ Utiliser la commande **pip install -r ./requirements.txt**
 
 - Lancer un inviter de commande et éxecuter [./dataset.sh](dataset.sh) téléchargera tous les datasets que nous avons utilisés
 - Attention à avoir assez de place sur la machine
+- Les ordis de l'INSA peuvent bloquer le téléchargement, il faut donc télécharger les archives sur une autre machines, les transvaser puis les extraire manuellement.
 - Si tous ces dossiers ne sont pas dans data alors leur .zip doit se trouver dans le repertoire racine et peuvent être extrait manuellement
 - Attention à donner le même nom que ceux suivants pour que la librairie les retrouve bien : </br>
 **data/ </br>
