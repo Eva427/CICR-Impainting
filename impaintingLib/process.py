@@ -11,7 +11,7 @@ import impaintingLib as imp
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", scale_factor=4, epochs=5, simplify_seg=True, show_images=True, summary=True):
+def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", scale_factor=4, epochs=5, lrDecrease=True, simplify_seg=True, show_images=True, summary=True):
     """Voir le tutoriel pour une explication en détail"""
     net.train()
     accum_iter = 100 
@@ -52,12 +52,13 @@ def train_inpainting(net, optimizer, loader, alter, losses, runName="bigRun", sc
                     optimizer.zero_grad()
                 
                 t2.set_description(f'Epoch {epoch}, training loss: {mean(running_loss)}, LR : {current_lr}, epoch {epoch + 1}/{epochs}')
-                
-        current_lr = optimizer.param_groups[0]["lr"]
-        lrs.append(current_lr)
-        scheduler.step()
-                
+
         t1.set_description(f'Epoch {epoch + 1}/{epochs}, LR : {current_lr}')
+
+        if lrDecrease :        
+            current_lr = optimizer.param_groups[0]["lr"]
+            lrs.append(current_lr)
+            scheduler.step()
             
         if show_images:
             imp.utils.plot_img(x[:8])
