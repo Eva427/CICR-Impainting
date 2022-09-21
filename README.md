@@ -41,7 +41,7 @@ En cas d'erreur liens de téléchargement :
 ### Lancement
 
 Une docker image à été mis en place pour préparer le re-déploiement de l'application web sur un autre serveur.
-L'image se situe ici [cicr-docker.tar](cicr-docker.tar) et peut être utilisé avec les commandes suivantes (si docker est bien installé).
+L'image se situe ici [cicr-docker.zip](https://mega.nz/file/JLlQTaIS#_jdQEPQ4YN-vwQT77I5bW9SjHLjFqW9I9HeAy7ar-qU) et une fois téléchargé et dé-zippé elle peut être utilisé avec les commandes suivantes (si docker est bien installé).
 ```
 sudo docker load < cicr-docker.tar 
 sudo docker run -d --network="host" cicr-docker
