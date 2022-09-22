@@ -77,8 +77,8 @@ Mises en garde quant à l'application web :
 Disponible [ici](historique.md)
 
 ### Références
-```
 ESRGAN : 
+```
 @InProceedings{wang2018esrgan,
     author = {Wang, Xintao and Yu, Ke and Wu, Shixiang and Gu, Jinjin and Liu, Yihao and Dong, Chao and Qiao, Yu and Loy, Chen Change},
     title = {ESRGAN: Enhanced super-resolution generative adversarial networks},
@@ -86,8 +86,9 @@ ESRGAN :
     month = {September},
     year = {2018}
 }
-
-Segmentation
+```
+Segmentation:
+```
 @inproceedings{CelebAMask-HQ,
   title={MaskGAN: Towards Diverse and Interactive Facial Image Manipulation},
   author={Lee, Cheng-Han and Liu, Ziwei and Wu, Lingyun and Luo, Ping},
@@ -95,3 +96,7 @@ Segmentation
   year={2020}
 }
 ```
+[Code repository](https://github.com/switchablenorms/CelebAMask-HQ/tree/master/face_parsing)  
+
+Key points detection:  
+[Code repository](https://github.com/braindotai/Facial-Landmarks-Detection-Pytorch) 
