@@ -83,7 +83,7 @@ def getTestImages(file,factorResize=1,doCrop=True,doShuffle=False):
     - **doShuffle** Si `True` mélange aléatoirement le dataset, sinon renvoie toujours les premieres images du dossier
     - **return** : torch.Size([16, 3, 64\*factorResize, 64\*factorResize])"""
 
-    dataset = getDataset(file,factorResize,doCrop,doShuffle)
+    dataset = getDataset(file,factorResize,doCrop)
     dataset = DataLoader(dataset, num_workers=2, batch_size=16, shuffle=doShuffle)
     return next(iter(dataset))[0]
 
