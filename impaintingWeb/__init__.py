@@ -26,7 +26,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Impainter
 impainter = imp.model.UNet(5, netType="partial")
-impainter_weight_path = './modelSave/impainter.pth'
+impainter_weight_path = './modelSave/train/dataAug.pth'
 impainter.load_state_dict(torch.load(impainter_weight_path, map_location=device))
 impainter.eval()
 
