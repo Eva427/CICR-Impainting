@@ -34,6 +34,8 @@ La segmentation est très puissante et à grandement amélioré les résultats q
 
 Attention cependant, si vous refaites la segmentation à ne pas donner au modèle trop d'information. Ce qu'on faisait initialement était de reprendre les 3 couches très détaillées sorties par le segmenteur ce qui recréait les images à l'identique quelque soit les zones impaintés.
 
+A savoir aussi que nous avons, dans notre version finale, utilisé une version simplifié de la segmentation en réduisant le nombre de features reconnues. L'objectif était d'avoir moins de choses à mémoriser du point de vue du modèle. Cependant le modèle apprend quand même à reconnaitre ces features avec une absence d'indication (exemple : un "vide" autour des yeux sera reconstruit comme des lunettes). Cela ne semble donc pas économiser quoi que ce soit du point de vue du modèle. Il pourrait donc être pertinent d'enlever la simplification pour permettre au modèle d'avoir plus d'informations.
+
 ## Keypoints
 On a ici aussi utilisé un modèle pré-entrainé qui, lorsqu'on lui donne une image en entrée nous sort une liste de points clés du visage. On convertie ensuite cette liste de points en un tensor de même dimension que l'image et sur 1 seule couche où les pixels indiqués par les coordonnés de keypoints sont en blanc et le reste en noir. 
 
